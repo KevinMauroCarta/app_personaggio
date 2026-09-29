@@ -395,4 +395,46 @@ final List<Capacita> listaCapacita = [
     costo: 0,
     tag: const ['Freddo'],
   ),
+
+  // Capacità da Impianto: non si comprano, le concede un impianto
+  // installato (Lista/ChipNeurali, Lista/Protesi). Segnaposto come gli
+  // impianti che le danno.
+  Capacita(
+    nome: 'Poliglotta',
+    tipo: TipoCapacita.impianto,
+    descrizione:
+        'Ogni voce arriva già tradotta, e le parole giuste nella lingua '
+        'dell\'altro ti salgono alle labbra senza cercarle.',
+    effetto: 'Persuasione +1',
+    modificatoreAbilita: const Modificatore(nome: 'Persuasione', valore: 1),
+    costo: 0,
+    tag: const ['Diplomatico'],
+  ),
+  Capacita(
+    nome: 'Visione Notturna',
+    tipo: TipoCapacita.impianto,
+    descrizione:
+        'Il buio non è più buio: vedi forme e movimenti dove gli altri '
+        'vedono solo ombra.',
+    effetto: 'Percezione +1',
+    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    costo: 0,
+    tag: const ['Intuitivo'],
+  ),
+  Capacita(
+    nome: 'Presa d\'Acciaio',
+    tipo: TipoCapacita.impianto,
+    descrizione:
+        'Quello che afferri non ti scappa: la stretta dei pistoni non si '
+        'allenta finché non lo decidi tu.',
+    effetto: 'Mischia Pesante +1',
+    modificatoreAbilita: const Modificatore(nome: 'Mischia Pesante', valore: 1),
+    costo: 0,
+    tag: const ['Forte'],
+  ),
 ];
+
+/// La Capacità di nome [nome] (lancia se non esiste): per i cataloghi
+/// che ne concedono una, come gli Impianti.
+Capacita capacitaDaNome(String nome) =>
+    listaCapacita.firstWhere((c) => c.nome == nome);

@@ -19,4 +19,17 @@ extension AbilitaArmaNome on AbilitaArma {
         return 'Mischia Pesante';
     }
   }
+
+  /// La sigla dell'Abilità, per la tabella delle Armi in Scheda: sul
+  /// telefono il nome intero ruberebbe una colonna larga.
+  String get sigla {
+    switch (this) {
+      case AbilitaArma.mira:
+        return 'M';
+      case AbilitaArma.mischiaLeggera:
+        return 'ML';
+      case AbilitaArma.mischiaPesante:
+        return 'MP';
+    }
+  }
 }

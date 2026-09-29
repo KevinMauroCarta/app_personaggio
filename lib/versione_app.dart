@@ -10,4 +10,4 @@
 /// perché leggere pubspec.yaml a runtime richiederebbe un pacchetto in
 /// più: a tenerli in riga ci pensa un test (versione_app_test.dart), che
 /// diventa rosso appena i due numeri divergono.
-const String versioneApp = '0.5.3';
+const String versioneApp = '0.6.0';

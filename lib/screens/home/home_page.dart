@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/personaggio.dart';
 import '../../models/scheda.dart';
 import '../../services/character_storage.dart';
+import '../../services/effetti_personaggio.dart';
 import '../../versione_app.dart';
 import '../../widgets/sezione_collassabile.dart';
 import '../creazione_pg/creazione_pg_page.dart';
@@ -162,9 +163,24 @@ class _HomePageState extends State<HomePage> {
     if (personaggioAggiornato != null) {
       await _salvaScheda(
         indice,
-        _schede[indice].copyWith(personaggio: personaggioAggiornato),
+        _conPersonaggio(_schede[indice], personaggioAggiornato),
       );
     }
+  }
+
+  /// [scheda] con dentro [personaggio], tornato da Modifica o Aumento.
+  ///
+  /// Quelle pagine ricalcolano il Valore Bonus senza gli Impianti, che
+  /// stanno nella Scheda e non nel Personaggio: qui si ricalcola con
+  /// quelli della scheda, altrimenti dopo un Aumento un chip "Mira +1"
+  /// smetterebbe di alzare la Mira.
+  Scheda _conPersonaggio(Scheda scheda, Personaggio personaggio) {
+    return scheda.copyWith(
+      personaggio: conEffettiRicalcolati(
+        personaggio,
+        impianti: scheda.impianti,
+      ),
+    );
   }
 
   /// Apre Aumento per il personaggio all'[indice] indicato e, se torna
@@ -180,7 +196,7 @@ class _HomePageState extends State<HomePage> {
     if (personaggioAggiornato != null) {
       await _salvaScheda(
         indice,
-        _schede[indice].copyWith(personaggio: personaggioAggiornato),
+        _conPersonaggio(_schede[indice], personaggioAggiornato),
       );
     }
   }

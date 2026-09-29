@@ -10,10 +10,14 @@ import '../../enums/tipo_azione.dart';
 import '../../enums/taglia.dart';
 import '../../enums/tipo_capacita.dart';
 import '../../enums/tipo_danno.dart';
-import '../../models/abilita_personaggio.dart';
 import '../../models/caratteristica_personaggio.dart';
 import '../../models/equipaggiamento.dart';
+import '../../models/chip_neurale.dart';
 import '../../models/ferite.dart';
+import '../../models/impianti.dart';
+import '../../models/protesi.dart';
+import '../../enums/tipo_protesi.dart';
+import '../../enums/parte_corpo.dart';
 import '../../models/lesione_memorabile.dart';
 import '../../models/lesione_traumatica.dart';
 import '../../models/modificatore.dart';
@@ -28,8 +32,10 @@ import '../creazione_pg/creazione_pg_dati.dart' show legendaAsteriscoAbilita;
 import '../creazione_pg/creazione_pg_widgets.dart';
 import '../creazione_pg/dettagli_modelli.dart';
 import 'barra_stato.dart';
+import 'campo_scelta_catalogo.dart';
+import 'criteri_catalogo.dart';
 import 'dettagli_oggetto.dart';
-import 'dialog_aggiungi_oggetto.dart';
+import 'dialog_scelta_catalogo.dart';
 import 'dialog_danno.dart';
 import 'scheda_dati.dart';
 
@@ -42,9 +48,10 @@ import 'scheda_dati.dart';
 ///   Furtiva, Lesioni/Mutazioni/Corruzione.
 /// - Abilità: Caratteristiche e Abilità (sola lettura: si cambiano in
 ///   Modifica e in Aumento)
-/// - Equip: Armi e Armatura indossate. Si scelgono da un catalogo,
-///   con lo stesso dropdown delle Capacità Generiche in Creazione, e
-///   si possono ripetere: due coltelli sono due righe.
+/// - Equip: Armi e Armatura indossate. Si scelgono da un catalogo in
+///   una modale con filtri che si sommano, ognuno su un campo a scelta
+///   (nome, tipo, tratti, danno...), e si possono ripetere: due coltelli
+///   sono due righe.
 /// - Capacità: Talenti e Capacità. Ognuno si apre toccandone il nome,
 ///   mostrando descrizione, effetto, modificatori e tutto il resto.
 /// - Poteri: i Poteri Psionici, che hanno una pagina loro perché si
@@ -52,8 +59,13 @@ import 'scheda_dati.dart';
 ///   Talenti e Capacità.
 /// - Stato: Difesa, Grinta, le barre di Ferite e Shock e il Grado
 ///   Ferita. È la pagina che si tiene aperta durante uno scontro.
+/// - Punk (nome provvisorio): gli Impianti, cioè Chip Neurali e Protesi
+///   (Sostitutivi ed Esoscheletri).
 /// - Oggetti: Influenza, Ricchezza e quello che il personaggio si porta
 ///   dietro.
+///
+/// Equip, Punk e Oggetti stanno in fondo e vicini: sono le tre pagine
+/// di quello che il personaggio ha addosso.
 ///
 /// Le modifiche non hanno un pulsante "Salva": la [Scheda] aggiornata
 /// viene restituita alla Home quando si torna indietro, ed è la Home a
@@ -72,10 +84,11 @@ import 'scheda_dati.dart';
 const List<String> _pagine = [
   'Info',
   'Abilità',
-  'Equip',
   'Capacità',
   'Poteri',
   'Stato',
+  'Equip',
+  'Punk',
   'Oggetti',
 ];
 
@@ -123,6 +136,12 @@ class _SchedaPageState extends State<SchedaPage> {
   /// ripetuto due volte vale quantità 2 (vedi [_oggettiConQuantita]).
   late List<String> _oggetti;
 
+  /// Gli Impianti installati (pagina "Punk"), nell'ordine in cui sono
+  /// stati aggiunti. Lo stesso chip o la stessa protesi si può avere
+  /// più volte: due braccia meccaniche sono due protesi.
+  late List<ChipNeurale> _chipNeurali;
+  late List<Protesi> _protesi;
+
   /// Le note scritte a mano dal giocatore, una per riga.
   late List<String> _note;
 
@@ -156,6 +175,8 @@ class _SchedaPageState extends State<SchedaPage> {
 
     _oggetti = [...scheda.equipaggiamento.oggetti];
     _ricchezza = scheda.equipaggiamento.ricchezza;
+    _chipNeurali = [...scheda.impianti.chipNeurali];
+    _protesi = [...scheda.impianti.protesi];
     _note = [...scheda.note];
 
     _furtivitaController = TextEditingController(text: '$_furtivitaPassiva');
@@ -193,6 +214,7 @@ class _SchedaPageState extends State<SchedaPage> {
       gradoFerita: _gradoFerita,
     ),
     equipaggiamento: _equipaggiamentoCorrente,
+    impianti: _impiantiCorrenti,
     personaggio: _personaggioCorrente,
     note: _note,
   );
@@ -206,59 +228,38 @@ class _SchedaPageState extends State<SchedaPage> {
     );
   }
 
+  Impianti get _impiantiCorrenti =>
+      Impianti(chipNeurali: _chipNeurali, protesi: _protesi);
+
   Personaggio get _personaggioCorrente {
     final p = widget.scheda.personaggio;
 
     // Il Valore Bonus va ricalcolato qui e non solo in
-    // Creazione/Aumento: le Mutazioni si prendono da questa pagina, e
-    // alcune portano un Modificatore. Senza ricalcolo la mutazione
-    // comparirebbe in elenco senza alzare niente.
-    final caratteristiche = [
-      for (final c in p.caratteristiche)
-        CaratteristicaPersonaggio(
-          caratteristica: c.caratteristica,
-          valoreBase: c.valoreBase,
-          valoreBonus: bonusCaratteristica(
-            c.caratteristica.nome,
-            capacita: p.capacita,
-            background: p.background,
-            mutazioni: _mutazioni,
-          ),
-        ),
-    ];
-
-    final abilita = [
-      for (final a in p.abilita)
-        AbilitaPersonaggio(
-          abilita: a.abilita,
-          valoreBase: a.valoreBase,
-          valoreBonus: bonusAbilita(
-            a.abilita.nome,
-            capacita: p.capacita,
-            background: p.background,
-          ),
-        ),
-    ];
-
-    return Personaggio(
-      nome: p.nome,
-      anni: p.anni,
-      genere: p.genere,
-      razza: p.razza,
-      sistemaDiOrigine: p.sistemaDiOrigine,
-      pianetaDiOrigine: p.pianetaDiOrigine,
-      background: p.background,
-      caratteristiche: caratteristiche,
-      abilita: abilita,
-      talenti: p.talenti,
-      capacita: p.capacita,
-      lesioniMemorabili: _lesioniMemorabili,
-      lesioniTraumatiche: _lesioniTraumatiche,
-      mutazioni: _mutazioni,
-      corruzione: _corruzione,
-      poteriPsionici: p.poteriPsionici,
-      tag: p.tag,
-      pxDisponibili: p.pxDisponibili,
+    // Creazione/Aumento: Mutazioni e Impianti si prendono da questa
+    // pagina, e portano Modificatori. Senza ricalcolo un chip o una
+    // mutazione comparirebbero in elenco senza alzare niente.
+    return conEffettiRicalcolati(
+      Personaggio(
+        nome: p.nome,
+        anni: p.anni,
+        genere: p.genere,
+        razza: p.razza,
+        sistemaDiOrigine: p.sistemaDiOrigine,
+        pianetaDiOrigine: p.pianetaDiOrigine,
+        background: p.background,
+        caratteristiche: p.caratteristiche,
+        abilita: p.abilita,
+        talenti: p.talenti,
+        capacita: p.capacita,
+        lesioniMemorabili: _lesioniMemorabili,
+        lesioniTraumatiche: _lesioniTraumatiche,
+        mutazioni: _mutazioni,
+        corruzione: _corruzione,
+        poteriPsionici: p.poteriPsionici,
+        tag: p.tag,
+        pxDisponibili: p.pxDisponibili,
+      ),
+      impianti: _impiantiCorrenti,
     );
   }
 
@@ -288,10 +289,11 @@ class _SchedaPageState extends State<SchedaPage> {
               children: [
                 _buildPaginaInfo(scheda),
                 _buildPaginaAbilita(scheda),
-                _buildPaginaEquip(scheda),
                 _buildPaginaCapacita(scheda.personaggio),
                 _buildPaginaPoteri(scheda.personaggio),
                 _buildPaginaStato(scheda),
+                _buildPaginaEquip(scheda),
+                _buildPaginaPunk(),
                 _buildPaginaOggetti(scheda),
               ],
             ),
@@ -706,8 +708,8 @@ class _SchedaPageState extends State<SchedaPage> {
     });
   }
 
-  /// Campi di scelta delle Armi: un dropdown per arma, con un campo
-  /// libero in coda.
+  /// Campi di scelta delle Armi: uno per arma, con un campo libero in
+  /// coda. Toccandoli si apre la modale con la ricerca.
   ///
   /// Ogni campo offre sempre il catalogo intero, anche le armi già
   /// scelte: due coltelli o due pistole sono cose normali da avere
@@ -716,15 +718,20 @@ class _SchedaPageState extends State<SchedaPage> {
     return List.generate(_armiSelezionate.length, (indice) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: DropdownConDettagli(
+        child: CampoSceltaCatalogo(
           label: 'Arma ${indice + 1}',
           valoreSelezionato: _armiSelezionate[indice],
-          opzioni: armiOptions,
-          descrizioni: {for (final a in armiOptions) a: descrizioneArma(a)},
-          contenutoInfo: (opzioni) => DettagliArma(armi: armiDaNomi(opzioni)),
+          modale: () => DialogSceltaCatalogo(
+            titolo: 'Scegli arma',
+            opzioni: armiOptions,
+            criteri: criteriArmi,
+            testoVuoto: 'Nessuna arma trovata.',
+            iconaScelta: Icons.check_circle_outline,
+            tooltipScelta: (nome) => 'Scegli $nome',
+          ),
+          contenutoInfo: (nome) => DettagliArma(armi: armiDaNomi([nome])),
           onChanged: (valore) => _onArmaSelezionata(indice, valore),
           onRimuovi: () => _rimuoviArma(indice),
-          infoSoloOpzioneSelezionata: true,
         ),
       );
     });
@@ -821,7 +828,14 @@ class _SchedaPageState extends State<SchedaPage> {
               label: const Text('Aggiungi oggetto'),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          Text(
+            'Il Mio Inventario',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
           if (quantita.isEmpty)
             Text(
               'Nessun oggetto.',
@@ -874,6 +888,10 @@ class _SchedaPageState extends State<SchedaPage> {
   ///
   /// Il nome è toccabile e apre i dati dell'oggetto, ed è colorato per
   /// farlo capire senza doverci provare.
+  ///
+  /// Un impianto (Chip Neurale o Protesi) ha in più il pulsante per
+  /// installarlo: passa alla pagina Punk, e da lì dà i suoi effetti.
+  /// È spento quando gli impianti installati sono già al massimo.
   Widget _rigaOggetto({required String nome, required int quantita}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -894,6 +912,14 @@ class _SchedaPageState extends State<SchedaPage> {
               ),
             ),
           ),
+          if (eImpianto(nome))
+            IconButton(
+              icon: const Icon(Icons.memory),
+              tooltip: 'Installa $nome',
+              onPressed: _impiantiCorrenti.pieno
+                  ? null
+                  : () => _installaDaOggetti(nome),
+            ),
           IconButton(
             icon: const Icon(Icons.remove_circle_outline),
             tooltip: 'Togli un $nome',
@@ -920,7 +946,7 @@ class _SchedaPageState extends State<SchedaPage> {
   Future<void> _mostraModaleAggiungiOggetto() async {
     final scelto = await showDialog<String>(
       context: context,
-      builder: (_) => DialogAggiungiOggetto(opzioni: oggettiOptions),
+      builder: (_) => DialogSceltaCatalogo.oggetti(opzioni: oggettiOptions),
     );
     if (scelto == null || !mounted) return;
     _modifica(() => _oggetti.add(scelto));
@@ -930,6 +956,277 @@ class _SchedaPageState extends State<SchedaPage> {
   /// sparisce da sé perché il nome non compare più nell'elenco.
   void _togliUnOggetto(String nome) {
     _modifica(() => _oggetti.remove(nome));
+  }
+
+  /// Pagina Punk (nome provvisorio): gli Impianti installati.
+  ///
+  /// In cima quanti impianti sono installati sul massimo
+  /// ([Impianti.massimo]); sotto due sezioni, Chip Neurali e Protesi,
+  /// ognuna con il suo pulsante per installare dal catalogo con la stessa
+  /// modale di ricerca di Equip e Oggetti. Le Protesi sono divise nei
+  /// loro due tipi: i Sostitutivi, che rimpiazzano una parte mancante, e
+  /// gli Esoscheletri, che ne potenziano una sana.
+  ///
+  /// Quello che sta in questa pagina è installato e dà i suoi effetti.
+  /// Disinstallato, un impianto finisce fra gli Oggetti, e da lì si può
+  /// installare di nuovo.
+  Widget _buildPaginaPunk() {
+    final sostitutivi = _protesi
+        .where((p) => p.tipo == TipoProtesi.sostitutivo)
+        .toList();
+    final esoscheletri = _protesi
+        .where((p) => p.tipo == TipoProtesi.esoscheletro)
+        .toList();
+    final pieno = _impiantiCorrenti.pieno;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _contatoreImpianti(),
+          const SizedBox(height: 16),
+          _buildSezione('Chip Neurali', [
+            _pulsanteAggiungi(
+              'Aggiungi chip neurale',
+              pieno ? null : _aggiungiChipNeurale,
+            ),
+            if (_chipNeurali.isEmpty)
+              _nessuno('Nessun chip neurale.')
+            else
+              for (final chip in _chipNeurali)
+                _rigaImpianto(
+                  nome: chip.nome,
+                  dettaglio: _dettaglioImpianto(
+                    'Chip Neurale',
+                    chip.modificatori,
+                    chip.capacita?.nome,
+                  ),
+                  onDisinstalla: () => _modifica(() {
+                    _chipNeurali.remove(chip);
+                    _oggetti.add(chip.nome);
+                  }),
+                ),
+          ]),
+          const SizedBox(height: 16),
+          _buildSezione('Protesi', [
+            _pulsanteAggiungi(
+              'Aggiungi protesi',
+              pieno ? null : _aggiungiProtesi,
+            ),
+            _sottoTitolo('Sostitutivi'),
+            if (sostitutivi.isEmpty)
+              _nessuno('Nessun sostitutivo.')
+            else
+              for (final p in sostitutivi) _rigaProtesi(p),
+            _sottoTitolo('Esoscheletri'),
+            if (esoscheletri.isEmpty)
+              _nessuno('Nessun esoscheletro.')
+            else
+              for (final p in esoscheletri) _rigaProtesi(p),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  /// "Impianti installati  x/5", in cima alla pagina.
+  ///
+  /// Arrivati al massimo il numero si colora e una riga dice come fare
+  /// posto: i pulsanti per installare sono spenti, e senza spiegazione
+  /// sembrerebbero rotti.
+  Widget _contatoreImpianti() {
+    final impianti = _impiantiCorrenti;
+    final colori = Theme.of(context).colorScheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Impianti installati',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Text(
+                  '${impianti.totale}/${Impianti.massimo}',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: impianti.pieno ? colori.error : colori.primary,
+                  ),
+                ),
+              ],
+            ),
+            if (impianti.pieno)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Limite raggiunto: disinstalla un impianto per '
+                  'installarne un altro.',
+                  style: TextStyle(fontSize: 12, color: colori.error),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _rigaProtesi(Protesi protesi) {
+    return _rigaImpianto(
+      nome: protesi.nome,
+      dettaglio: _dettaglioImpianto(
+        protesi.parte.label,
+        protesi.modificatori,
+        protesi.capacita?.nome,
+      ),
+      onDisinstalla: () => _modifica(() {
+        _protesi.remove(protesi);
+        _oggetti.add(protesi.nome);
+      }),
+    );
+  }
+
+  /// La riga sotto il nome di un impianto: cosa è (Chip Neurale, o la
+  /// parte del corpo della protesi), i suoi Modificatori e la Capacità da
+  /// Impianto che concede, se ne ha.
+  String _dettaglioImpianto(
+    String cosa,
+    List<Modificatore> modificatori,
+    String? capacita,
+  ) => [
+    cosa,
+    ...modificatori.map(testoModificatore),
+    if (capacita != null) 'Capacità: $capacita',
+  ].join(' · ');
+
+  /// Installa l'impianto [nome] preso dagli Oggetti: ne toglie una copia
+  /// dall'inventario e lo mette fra gli impianti installati.
+  void _installaDaOggetti(String nome) {
+    final chip = chipNeuraleDaNome(nome);
+    final protesi = protesiDaNome(nome);
+    if (_impiantiCorrenti.pieno || (chip == null && protesi == null)) return;
+    _modifica(() {
+      _oggetti.remove(nome);
+      if (chip != null) _chipNeurali.add(chip);
+      if (protesi != null) _protesi.add(protesi);
+    });
+  }
+
+  /// Riga di un impianto: nome e dettaglio a sinistra, "Disinstalla" a
+  /// destra.
+  ///
+  /// Il nome è toccabile e apre tutti i dati dell'impianto, ed è colorato
+  /// per farlo capire, come le righe della pagina Oggetti.
+  Widget _rigaImpianto({
+    required String nome,
+    required String dettaglio,
+    required VoidCallback onDisinstalla,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () => mostraDettagliOggetto(context, nome),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nome,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  Text(
+                    dettaglio,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Disinstallare non butta via: l'impianto torna fra gli Oggetti.
+        IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Disinstalla $nome',
+          onPressed: onDisinstalla,
+        ),
+      ],
+    );
+  }
+
+  Widget _pulsanteAggiungi(String testo, VoidCallback? onPressed) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: const Icon(Icons.add),
+          label: Text(testo),
+        ),
+      ),
+    );
+  }
+
+  Widget _nessuno(String testo) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text(
+        testo,
+        style: TextStyle(
+          fontStyle: FontStyle.italic,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _aggiungiChipNeurale() async {
+    final scelto = await showDialog<String>(
+      context: context,
+      builder: (_) => DialogSceltaCatalogo(
+        titolo: 'Aggiungi chip neurale',
+        opzioni: chipNeuraliOptions,
+        criteri: criteriChipNeurali,
+        testoVuoto: 'Nessun chip trovato.',
+        iconaScelta: Icons.add_circle_outline,
+        tooltipScelta: (nome) => 'Aggiungi $nome',
+      ),
+    );
+    final chip = scelto == null ? null : chipNeuraleDaNome(scelto);
+    if (chip == null || !mounted) return;
+    _modifica(() => _chipNeurali.add(chip));
+  }
+
+  Future<void> _aggiungiProtesi() async {
+    final scelta = await showDialog<String>(
+      context: context,
+      builder: (_) => DialogSceltaCatalogo(
+        titolo: 'Aggiungi protesi',
+        opzioni: protesiOptions,
+        criteri: criteriProtesi,
+        testoVuoto: 'Nessuna protesi trovata.',
+        iconaScelta: Icons.add_circle_outline,
+        tooltipScelta: (nome) => 'Aggiungi $nome',
+      ),
+    );
+    final protesi = scelta == null ? null : protesiDaNome(scelta);
+    if (protesi == null || !mounted) return;
+    _modifica(() => _protesi.add(protesi));
   }
 
   /// Sposta il Grado Ferita di un passo, restando fra 0 e 3.
@@ -1230,7 +1527,11 @@ class _SchedaPageState extends State<SchedaPage> {
                   for (final arma in scheda.equipaggiamento.armi)
                     [
                       arma.nome,
-                      arma.abilitaAssociata.nomeAbilita,
+                      // Sigla e Valore Totale dell'Abilità ("MP 5"): il
+                      // numero è la Riserva di Dadi con cui si attacca,
+                      // ed è quello che serve avere sott'occhio.
+                      '${arma.abilitaAssociata.sigla} '
+                          '${scheda.riservaDiDadi(arma)}',
                       '${arma.danno}',
                       '${arma.dadiExtra}',
                       '${arma.valorePenetrazione}',
@@ -1250,19 +1551,22 @@ class _SchedaPageState extends State<SchedaPage> {
           ]),
           const SizedBox(height: 16),
           _buildSezione('Equipaggiamento - Armatura', [
-            DropdownConDettagli(
+            CampoSceltaCatalogo(
               label: 'Armatura indossata',
               valoreSelezionato: _armaturaSelezionata,
-              opzioni: armatureOptions,
-              descrizioni: {
-                for (final a in armatureOptions) a: descrizioneArmatura(a),
-              },
-              contenutoInfo: (opzioni) =>
-                  DettagliArmatura(armature: armatureDaNomi(opzioni)),
+              modale: () => DialogSceltaCatalogo(
+                titolo: 'Scegli armatura',
+                opzioni: armatureOptions,
+                criteri: criteriArmature,
+                testoVuoto: 'Nessuna armatura trovata.',
+                iconaScelta: Icons.check_circle_outline,
+                tooltipScelta: (nome) => 'Scegli $nome',
+              ),
+              contenutoInfo: (nome) =>
+                  DettagliArmatura(armature: armatureDaNomi([nome])),
               onChanged: (valore) =>
                   _modifica(() => _armaturaSelezionata = valore),
               onRimuovi: () => _modifica(() => _armaturaSelezionata = null),
-              infoSoloOpzioneSelezionata: true,
             ),
             const SizedBox(height: 8),
             if (scheda.equipaggiamento.armatura == null)
@@ -1318,7 +1622,8 @@ class _SchedaPageState extends State<SchedaPage> {
           ]),
           const SizedBox(height: 16),
           _buildSezione('Capacità', [
-            if (personaggio.capacita.isEmpty)
+            if (personaggio.capacita.isEmpty &&
+                _impiantiCorrenti.capacita.isEmpty)
               _riga('Capacità', '-')
             else
               ...personaggio.capacita.map(
@@ -1342,10 +1647,46 @@ class _SchedaPageState extends State<SchedaPage> {
                   if (c.tag.isNotEmpty) _riga('Tag', c.tag.join(', ')),
                 ]),
               ),
+            ..._capacitaDaImpianto(),
           ]),
         ],
       ),
     );
+  }
+
+  /// Le Capacità da Impianto, in coda alle Capacità: le danno gli
+  /// impianti installati, e ognuna dice quale. Non stanno fra le Capacità
+  /// del Personaggio perché non sono sue ma dell'impianto: disinstallato
+  /// quello, spariscono anche da qui.
+  List<Widget> _capacitaDaImpianto() {
+    final concesse = _impiantiCorrenti.capacita;
+    if (concesse.isEmpty) return const [];
+
+    // Un Set: due braccia uguali concedono la capacità, ma il nome si
+    // scrive una volta.
+    String daChi(String capacita) => {
+      for (final c in _chipNeurali)
+        if (c.capacita?.nome == capacita) c.nome,
+      for (final p in _protesi)
+        if (p.capacita?.nome == capacita) p.nome,
+    }.join(', ');
+
+    return [
+      _sottoTitolo('Da Impianto'),
+      for (final c in concesse)
+        _voceEspandibile(c.nome, [
+          _riga('Tipo', c.tipo.label),
+          _riga('Concessa da', daChi(c.nome)),
+          _riga('Descrizione', c.descrizione),
+          _riga('Effetto', c.effetto),
+          for (final m in [
+            ?c.modificatoreCaratteristica,
+            ?c.modificatoreAbilita,
+          ])
+            _riga('Modificatore', testoModificatore(m)),
+          if (c.tag.isNotEmpty) _riga('Tag', c.tag.join(', ')),
+        ]),
+    ];
   }
 
   /// Pagina Poteri: i Poteri Psionici del personaggio, uno per voce.

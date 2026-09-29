@@ -4,6 +4,7 @@ import 'ferite.dart';
 import '../enums/taglia.dart';
 import 'armi/arma.dart';
 import 'equipaggiamento.dart';
+import 'impianti.dart';
 import '../enums/abilita_arma.dart';
 
 /// Modello/Scheda
@@ -38,6 +39,9 @@ class Scheda {
 
   final Equipaggiamento equipaggiamento;
 
+  /// Chip Neurali e Protesi (Modello/Impianti).
+  final Impianti impianti;
+
   /// NOTA: a differenza di Percezione Passiva (Scheda.percezionePassiva),
   /// la formula per Furtività Passiva non è ancora stabilita: resta un
   /// campo manuale.
@@ -63,6 +67,7 @@ class Scheda {
     this.velocitaBonus = 0,
     this.ferite = const Ferite(),
     this.equipaggiamento = const Equipaggiamento(),
+    this.impianti = const Impianti(),
     this.furtivitaPassiva = 0,
     this.shockAttuale = 0,
     this.peGuadagnati = 0,
@@ -196,6 +201,7 @@ class Scheda {
     int? velocitaBonus,
     Ferite? ferite,
     Equipaggiamento? equipaggiamento,
+    Impianti? impianti,
     int? furtivitaPassiva,
     int? shockAttuale,
     int? peGuadagnati,
@@ -208,6 +214,7 @@ class Scheda {
       velocitaBonus: velocitaBonus ?? this.velocitaBonus,
       ferite: ferite ?? this.ferite,
       equipaggiamento: equipaggiamento ?? this.equipaggiamento,
+      impianti: impianti ?? this.impianti,
       furtivitaPassiva: furtivitaPassiva ?? this.furtivitaPassiva,
       shockAttuale: shockAttuale ?? this.shockAttuale,
       peGuadagnati: peGuadagnati ?? this.peGuadagnati,
@@ -231,6 +238,11 @@ class Scheda {
           : Equipaggiamento.fromJson(
               json['equipaggiamento'] as Map<String, dynamic>,
             ),
+      // Le schede salvate prima degli Impianti non li hanno: partono
+      // senza chip né protesi.
+      impianti: json['impianti'] == null
+          ? const Impianti()
+          : Impianti.fromJson(json['impianti'] as Map<String, dynamic>),
       furtivitaPassiva: json['furtivitaPassiva'] as int? ?? 0,
       shockAttuale: json['shockAttuale'] as int? ?? 0,
       peGuadagnati: json['peGuadagnati'] as int? ?? 0,
@@ -251,6 +263,7 @@ class Scheda {
     'velocitaBonus': velocitaBonus,
     'ferite': ferite.toJson(),
     'equipaggiamento': equipaggiamento.toJson(),
+    'impianti': impianti.toJson(),
     'furtivitaPassiva': furtivitaPassiva,
     'shockAttuale': shockAttuale,
     'peGuadagnati': peGuadagnati,

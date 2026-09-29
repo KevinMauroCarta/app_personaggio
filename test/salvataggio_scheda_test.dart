@@ -140,20 +140,21 @@ void main() {
     await vaiAllaPagina(tester, 'Equip');
 
     final armatura = listaArmature.first;
-    // Cercata per etichetta: in pagina ci sono anche le tendine delle
-    // Armi e degli Oggetti.
-    final tendina = await _inVista(
+    // Cercato per etichetta: in pagina ci sono anche i campi delle Armi.
+    // Toccandolo si apre la modale di scelta, e la spunta della riga
+    // sceglie l'armatura.
+    final campo = await _inVista(
       tester,
       find
           .ancestor(
             of: find.text('Armatura indossata'),
-            matching: find.byType(DropdownButtonFormField<String>),
+            matching: find.byType(InkWell),
           )
           .first,
     );
-    await tester.tap(tendina);
+    await tester.tap(campo);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(armatura.nome).last);
+    await tester.tap(find.byTooltip('Scegli ${armatura.nome}'));
     await tester.pumpAndSettle();
 
     expect(

@@ -139,10 +139,26 @@ void main() {
     expect(find.text('Sì'), findsOneWidget);
     expect(find.text('-'), findsWidgets);
 
-    // L'Abilità è quella associata all'arma, e serve al giocatore per
-    // sapere su quale valore tirare (la Riserva di Dadi si legge in
-    // pagina Abilità).
-    expect(find.text(_fucile.abilitaAssociata.nomeAbilita), findsWidgets);
+    // L'Abilità è quella associata all'arma, in sigla e con accanto il
+    // suo Valore Totale: è la Riserva di Dadi con cui si attacca.
+    final scheda = _scheda();
+    for (final arma in [_fucile, _mazza]) {
+      expect(
+        find.text(
+          '${arma.abilitaAssociata.sigla} ${scheda.riservaDiDadi(arma)}',
+        ),
+        findsOneWidget,
+        reason: arma.nome,
+      );
+    }
+    // Il nome intero non c'è più: su un telefono ruberebbe una colonna.
+    expect(find.text(_fucile.abilitaAssociata.nomeAbilita), findsNothing);
+  });
+
+  test('le sigle delle Abilità d arma', () {
+    expect(AbilitaArma.mischiaPesante.sigla, 'MP');
+    expect(AbilitaArma.mira.sigla, 'M');
+    expect(AbilitaArma.mischiaLeggera.sigla, 'ML');
   });
 
   testWidgets('la pagina Stato ha il tasto info con tutte le formule', (
@@ -192,25 +208,8 @@ void main() {
     expect(find.text(_armatura.nome), findsWidgets);
   });
 
-  testWidgets('la stessa arma si può prendere più di una volta', (
-    tester,
-  ) async {
-    await _apriPagina3(tester);
-
-    // La scheda ha già la Pistola: deve restare fra le opzioni del campo
-    // vuoto in coda, altrimenti non si potrebbe averne due.
-    final tendine = find.byType(DropdownButtonFormField<String>);
-    await tester.ensureVisible(tendine.at(2));
-    await tester.pumpAndSettle();
-    await tester.tap(tendine.at(2));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text(_fucile.nome),
-      findsWidgets,
-      reason: 'un\'arma già scelta deve restare selezionabile',
-    );
-  });
+  // La scelta di Armi e Armatura (modale con ricerca e filtro per tipo)
+  // sta in scheda_ricerca_equip_test.dart.
 
   testWidgets('un tratto su due armi è spiegato una volta sola', (
     tester,

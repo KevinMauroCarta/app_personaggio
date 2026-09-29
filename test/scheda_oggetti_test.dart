@@ -129,7 +129,8 @@ Finder _testoRicco(String atteso) => find.byWidgetPredicate(
   description: 'RichText contenente "$atteso"',
 );
 
-/// Scrive [testo] nel campo di ricerca della modale.
+/// Scrive [testo] nel campo di ricerca della modale e lo salva come
+/// filtro: finché non si preme "Aggiungi filtro" l'elenco non cambia.
 ///
 /// Cercato dentro la modale: dietro c'è la pagina, che ha i suoi campi
 /// di testo (Ferite e Shock Attuali).
@@ -142,6 +143,7 @@ Future<void> _cerca(WidgetTester tester, String testo) async {
     testo,
   );
   await tester.pumpAndSettle();
+  await _tocca(tester, find.widgetWithText(FilledButton, 'Aggiungi filtro'));
 }
 
 void main() {
@@ -362,5 +364,28 @@ void main() {
     expect(salvate.last.equipaggiamento.oggetti, isEmpty);
     expect(find.text(_oggetto), findsNothing);
     expect(find.text('Nessun oggetto.'), findsOneWidget);
+  });
+
+  testWidgets('fra il pulsante e l inventario c è il titolo, centrato', (
+    tester,
+  ) async {
+    await _apriOggetti(tester, oggetti: [_oggetto]);
+
+    final titolo = find.text('Il Mio Inventario');
+    expect(titolo, findsOneWidget);
+
+    double alto(Finder f) => tester.getTopLeft(f).dy;
+    final bottone = find.widgetWithText(OutlinedButton, 'Aggiungi oggetto');
+    expect(alto(titolo), greaterThan(alto(bottone)));
+    expect(alto(titolo), lessThan(alto(find.text(_oggetto))));
+
+    // Centrato nella pagina.
+    expect(
+      tester.getCenter(titolo).dx,
+      moreOrLessEquals(
+        tester.view.physicalSize.width / tester.view.devicePixelRatio / 2,
+        epsilon: 1,
+      ),
+    );
   });
 }

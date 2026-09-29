@@ -13,6 +13,15 @@
       "args": ["--web-port=8080"]
     },
     {
+      // Temporanea: come "Edge", ma con il log dettagliato di Flutter,
+      // per capire perché Edge non parte quando lo lancia VS Code.
+      "name": "app_personaggio (Edge, log dettagliato)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "edge",
+      "args": ["--web-port=8080", "-v"]
+    },
+    {
       "name": "app_personaggio (Chrome)",
       "request": "launch",
       "type": "dart",
