@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // La porta web è fissata di proposito: sul browser i personaggi
+      // salvati finiscono nel localStorage, che è legato all'origine
+      // (localhost:PORTA). Senza --web-port la porta cambia a ogni
+      // avvio del debug e i personaggi salvati prima non si vedono più.
+      "name": "app_personaggio (Edge)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "edge",
+      "args": ["--web-port=8080"]
+    },
+    {
+      "name": "app_personaggio (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "args": ["--web-port=8080"]
+    },
+    {
+      // Su Windows i dati non stanno nel localStorage ma in un file
+      // nella cartella dati dell'app: persistono sempre.
+      "name": "app_personaggio (Windows)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows"
+    }
+  ]
+}

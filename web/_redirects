@@ -1,0 +1,7 @@
+# Cloudflare Pages: qualunque percorso non trovato serve comunque
+# index.html, così l'app parte invece di dare 404.
+#
+# Oggi l'app ha una schermata sola e non usa indirizzi diversi, quindi
+# non cambia niente; serve il giorno in cui un link punterà a una pagina
+# interna, o se qualcuno ricarica trovandosi su un percorso qualsiasi.
+/*    /index.html   200

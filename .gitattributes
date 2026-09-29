@@ -1,0 +1,21 @@
+# Fine riga uniformi: dentro al repository i file di testo si salvano
+# con LF, su qualunque sistema operativo.
+#
+# Serve perché Windows di suo scrive CRLF e gli strumenti da riga di
+# comando scrivono LF: senza questa regola due file modificati in due
+# modi diversi risultano diversi riga per riga, e la differenza fra un
+# commit e l'altro diventa illeggibile anche quando è cambiata una
+# parola sola.
+* text=auto eol=lf
+
+# I binari si lasciano stare: toccarne i byte li rovina.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.jar binary
+*.keystore binary
+*.apk binary
