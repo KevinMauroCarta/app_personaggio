@@ -1,4 +1,9 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'potenziamento.g.dart';
+
 /// Modello/Potenziamento
+@JsonSerializable()
 class Potenziamento {
   final String nome;
   final int costo;
@@ -12,19 +17,8 @@ class Potenziamento {
     required this.effetto,
   });
 
-  factory Potenziamento.fromJson(Map<String, dynamic> json) {
-    return Potenziamento(
-      nome: json['nome'] as String,
-      costo: json['costo'] as int,
-      replicabile: json['replicabile'] as bool,
-      effetto: json['effetto'] as String,
-    );
-  }
+  factory Potenziamento.fromJson(Map<String, dynamic> json) =>
+      _$PotenziamentoFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'costo': costo,
-    'replicabile': replicabile,
-    'effetto': effetto,
-  };
+  Map<String, dynamic> toJson() => _$PotenziamentoToJson(this);
 }

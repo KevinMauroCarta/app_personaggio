@@ -1,7 +1,12 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'capacita.dart';
 import 'modificatore.dart';
 
+part 'background.g.dart';
+
 /// Modello/Background
+@JsonSerializable()
 class Background {
   final String nome;
   final String descrizione;
@@ -22,33 +27,8 @@ class Background {
     required this.tag,
   });
 
-  factory Background.fromJson(Map<String, dynamic> json) {
-    return Background(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String,
-      capacitaDiBackground: Capacita.fromJson(
-        json['capacitaDiBackground'] as Map<String, dynamic>,
-      ),
-      modificatoreCaratteristica: json['modificatoreCaratteristica'] == null
-          ? null
-          : Modificatore.fromJson(
-              json['modificatoreCaratteristica'] as Map<String, dynamic>,
-            ),
-      modificatoreAbilita: json['modificatoreAbilita'] == null
-          ? null
-          : Modificatore.fromJson(
-              json['modificatoreAbilita'] as Map<String, dynamic>,
-            ),
-      tag: json['tag'] as String,
-    );
-  }
+  factory Background.fromJson(Map<String, dynamic> json) =>
+      _$BackgroundFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'capacitaDiBackground': capacitaDiBackground.toJson(),
-    'modificatoreCaratteristica': modificatoreCaratteristica?.toJson(),
-    'modificatoreAbilita': modificatoreAbilita?.toJson(),
-    'tag': tag,
-  };
+  Map<String, dynamic> toJson() => _$BackgroundToJson(this);
 }

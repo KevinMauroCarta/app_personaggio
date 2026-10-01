@@ -1,10 +1,15 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'caratteristica.dart';
+
+part 'abilita.g.dart';
 
 /// Modello/Abilità
 ///
 /// Se [addestramento] è true, l'abilità corrisponde a quelle marcate con
 /// asterisco (*) in Lista/Abilità: non possono essere effettuate a meno
 /// che non si abbia almeno un 1 in Valore Base (Regolamento/Abilità*).
+@JsonSerializable()
 class Abilita {
   final String nome;
   final String descrizione;
@@ -18,21 +23,8 @@ class Abilita {
     required this.addestramento,
   });
 
-  factory Abilita.fromJson(Map<String, dynamic> json) {
-    return Abilita(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String,
-      caratteristica: Caratteristica.fromJson(
-        json['caratteristica'] as Map<String, dynamic>,
-      ),
-      addestramento: json['addestramento'] as bool,
-    );
-  }
+  factory Abilita.fromJson(Map<String, dynamic> json) =>
+      _$AbilitaFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'caratteristica': caratteristica.toJson(),
-    'addestramento': addestramento,
-  };
+  Map<String, dynamic> toJson() => _$AbilitaToJson(this);
 }

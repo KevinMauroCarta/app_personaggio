@@ -283,12 +283,12 @@ final Map<String, String> talentiDescrizioni = {
   for (final t in listaTalenti) t.nome: t.descrizione,
 };
 
+/// Quante Capacità di Razza prende ogni personaggio: tutte diverse, fra
+/// quelle offerte dalla sua razza (campi "Capacità di Razza 1" e "2").
+const int capacitaRazzaDaScegliere = 2;
+
 /// Capacità di Razza disponibili in base alla razza scelta.
-///
-/// ATTENZIONE - dati incompleti: Regolamento/Razze non è ancora
-/// disponibile, quindi ogni razza ha al momento una lista vuota. Il
-/// dropdown corrispondente si disabiliterà automaticamente finché non
-/// verranno aggiunti i dati reali in data/lista_razze.dart.
+/// Fonte: Lista/Razze (data/lista_razze.dart).
 final Map<String, List<String>> capacitaRazzaOptions = {
   for (final razza in listaRazze)
     razza.nome: razza.capacita.map((c) => c.nome).toList(),
@@ -302,17 +302,26 @@ final Map<String, List<String>> capacitaSistemaOptions = {
     sistema.nome: sistema.capacitaDelSistema.map((c) => c.nome).toList(),
 };
 
-/// Capacità di Background disponibili in base al background selezionato.
+/// Capacità del Pianeta disponibili in base al pianeta di origine scelto.
+/// Servono sia il pianeta sia il suo [sistema]: i pianeti non hanno un
+/// elenco globale, stanno dentro il proprio sistema (Lista/Pianeti).
+List<String> capacitaPianetaOptions(String? sistema, String? pianeta) => [
+  for (final p in pianetiDaNomi(sistema, [?pianeta]))
+    ...p.capacitaDelPianeta.map((c) => c.nome),
+];
+
+/// La Capacità di Background del background [nome], null se nessun
+/// background è scelto.
 ///
-/// Ogni background ne ha una e una sola
-/// (Modello/Background.capacitaDiBackground), quindi la lista contiene
-/// sempre un unico elemento: resta una lista per uniformità con
-/// [capacitaRazzaOptions] e [capacitaSistemaOptions], che alimentano
-/// dropdown identici.
-final Map<String, List<String>> capacitaBackgroundOptions = {
-  for (final background in listaBackground)
-    background.nome: [background.capacitaDiBackground.nome],
-};
+/// Non si sceglie: ogni background ne ha una e una sola
+/// (Modello/Background.capacitaDiBackground), e in Pagina 2 compare già
+/// presa.
+String? capacitaDiBackground(String? nome) {
+  for (final b in listaBackground) {
+    if (b.nome == nome) return b.capacitaDiBackground.nome;
+  }
+  return null;
+}
 
 /// Capacità Generiche disponibili a tutti i personaggi.
 /// Fonte: Regolamento/Capacità (data/lista_capacita.dart), filtrate per
@@ -351,6 +360,49 @@ List<Capacita> capacitaDaNomi(List<String> nomi) => [
   for (final nome in nomi)
     if (_capacitaPerNome[nome] != null) _capacitaPerNome[nome]!,
 ];
+
+/// Rimette ciascuna delle [capacita] di un personaggio salvato nel campo
+/// di Pagina 2 da cui era stata presa, per precompilare la Modifica.
+///
+/// [campi] sono le opzioni dei campi a scelta singola, nell'ordine in cui
+/// la Creazione li salva: Capacità di Razza, di Sistema, del Pianeta, di
+/// Background. Dopo l'ultimo vengono le Capacità Generiche, ed è sempre
+/// in coda che le aggiunge anche Aumento.
+///
+/// Il tipo della capacità non basta a riconoscerle: alcuni sistemi offrono
+/// una Capacità Generica (Addestramento Psichico), che si può prendere
+/// come Capacità di Sistema e anche comprare come Generica, e le due
+/// Capacità di Razza hanno lo stesso tipo. Conta l'ordine: ogni capacità
+/// va nel primo campo, dopo quello dell'ultima sistemata, che la offre; da
+/// lì in poi una Generica che non trova campo chiude i campi, e le
+/// successive sono Generiche anche loro.
+///
+/// I campi senza capacità restano null: succede ai personaggi salvati
+/// quando la seconda Capacità di Razza e quella del Pianeta non c'erano.
+({List<String?> campi, List<String> generiche}) ripartisciCapacita(
+  List<Capacita> capacita,
+  List<List<String>> campi,
+) {
+  final scelte = List<String?>.filled(campi.length, null);
+  final generiche = <String>[];
+  var prossimo = 0;
+
+  for (final c in capacita) {
+    var i = prossimo;
+    while (i < campi.length && !campi[i].contains(c.nome)) {
+      i++;
+    }
+    if (i < campi.length) {
+      scelte[i] = c.nome;
+      prossimo = i + 1;
+    } else if (c.tipo == TipoCapacita.generica) {
+      generiche.add(c.nome);
+      prossimo = campi.length;
+    }
+  }
+
+  return (campi: scelte, generiche: generiche);
+}
 
 // ---------------------------------------------------------------------
 // Risoluzione nome -> modello, per i Pulsanti Info della Pagina 1 che

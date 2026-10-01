@@ -1,4 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'abilita.dart';
+
+part 'abilita_personaggio.g.dart';
 
 /// Modello/AbilitàPersonaggio
 ///
@@ -6,6 +10,7 @@ import 'abilita.dart';
 /// (vedi Utilizzo/Abilità). Il Valore Caratteristica non è memorizzato qui:
 /// va recuperato dal CaratteristicaPersonaggio associato del personaggio e
 /// passato a [valoreTotale].
+@JsonSerializable()
 class AbilitaPersonaggio {
   final Abilita abilita;
   final int valoreBase;
@@ -20,17 +25,8 @@ class AbilitaPersonaggio {
   int valoreTotale(int valoreCaratteristica) =>
       valoreBase + valoreCaratteristica + valoreBonus;
 
-  factory AbilitaPersonaggio.fromJson(Map<String, dynamic> json) {
-    return AbilitaPersonaggio(
-      abilita: Abilita.fromJson(json['abilita'] as Map<String, dynamic>),
-      valoreBase: json['valoreBase'] as int,
-      valoreBonus: json['valoreBonus'] as int? ?? 0,
-    );
-  }
+  factory AbilitaPersonaggio.fromJson(Map<String, dynamic> json) =>
+      _$AbilitaPersonaggioFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'abilita': abilita.toJson(),
-    'valoreBase': valoreBase,
-    'valoreBonus': valoreBonus,
-  };
+  Map<String, dynamic> toJson() => _$AbilitaPersonaggioToJson(this);
 }

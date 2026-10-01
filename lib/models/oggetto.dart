@@ -1,4 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/rarita.dart';
+
+part 'oggetto.g.dart';
 
 /// Modello/Oggetto
 ///
@@ -9,13 +13,17 @@ import '../enums/rarita.dart';
 ///
 /// Prima gli Oggetti erano nome e descrizione e basta, e in scheda non
 /// si poteva sapere quanto costasse quello che si aveva addosso.
+@JsonSerializable()
 class Oggetto {
   final String nome;
+  @JsonKey(defaultValue: '')
   final String descrizione;
 
   /// Quanto costa procurarselo, sulla stessa scala di Modello/Armi/Arma.
+  @JsonKey(defaultValue: 0)
   final int valore;
 
+  @JsonKey(defaultValue: Rarita.comune)
   final Rarita rarita;
 
   const Oggetto({
@@ -25,21 +33,8 @@ class Oggetto {
     required this.rarita,
   });
 
-  factory Oggetto.fromJson(Map<String, dynamic> json) {
-    return Oggetto(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String? ?? '',
-      valore: json['valore'] as int? ?? 0,
-      rarita: json['rarita'] == null
-          ? Rarita.comune
-          : Rarita.values.byName(json['rarita'] as String),
-    );
-  }
+  factory Oggetto.fromJson(Map<String, dynamic> json) =>
+      _$OggettoFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'valore': valore,
-    'rarita': rarita.name,
-  };
+  Map<String, dynamic> toJson() => _$OggettoToJson(this);
 }

@@ -12,10 +12,13 @@ import '../models/modificatore.dart';
 ///
 /// [Capacita.costo] è il prezzo in PE della capacità: sceglierla in
 /// Creazione/Modifica/Aumento scala quei PE, toglierla li restituisce.
-/// Solo le Capacità Generiche si pagano: quelle di Razza, di Sistema e di
-/// Background costano SEMPRE 0, perché arrivano da scelte già fatte
-/// (la razza, il sistema di origine, il background) e non da una spesa.
-/// Qui hanno tutte costo 0, e un test lo verifica.
+/// Solo le Capacità Generiche si pagano: quelle di Razza, di Sistema, del
+/// Pianeta e di Background costano SEMPRE 0, perché arrivano da scelte già
+/// fatte (la razza, il sistema e il pianeta di origine, il background) e
+/// non da una spesa. Qui hanno tutte costo 0, e un test lo verifica. Per
+/// lo stesso motivo una Generica offerta da un sistema (Addestramento
+/// Psichico) non si paga quando è presa come Capacità di Sistema: si paga
+/// solo comprandola come Generica.
 ///
 /// Nota: il documento non specifica i Tag per queste Capacità, campo
 /// obbligatorio in Modello/Capacità: portano un segnaposto
@@ -394,6 +397,399 @@ final List<Capacita> listaCapacita = [
     modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
     costo: 0,
     tag: const ['Freddo'],
+  ),
+
+  // ---- Capacità del Pianeta --------------------------------------------
+  // Ogni pianeta ne offre tre (Lista/Pianeti): quella della sua tipologia,
+  // uguale per tutti i pianeti di quel tipo, e due che si apprendono su
+  // di lui, scelte qui fra quelle che seguono e che più pianeti possono
+  // avere in comune.
+  //
+  // ATTENZIONE - inventate: nome, descrizione ed effetto sono una proposta
+  // costruita sulla tipologia e sui tag dei pianeti, da rivedere quando ci
+  // saranno i dati veri.
+
+  // Una per tipologia (Roccioso, Gassoso, Acquatico).
+  Capacita(
+    nome: 'Ossa di Pietra',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'La gravità piena di un mondo di roccia ti ha dato ossa dense e '
+        'muscoli abituati al peso: reggi fatiche e urti che piegherebbero '
+        'chiunque altro.',
+    effetto: 'Forza +1, Tempra +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    costo: 0,
+    tag: const ['Solido'],
+  ),
+  Capacita(
+    nome: 'Senso delle Correnti',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto fra le nubi di un gigante gassoso, su piattaforme '
+        'sospese e navette sempre in volo: senti il vento cambiare prima '
+        'che cambi, e ci guidi dentro.',
+    effetto: 'Agilità +1, Pilotaggio +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Pilotaggio', valore: 1),
+    costo: 0,
+    tag: const ['Mobile'],
+  ),
+  Capacita(
+    nome: 'Figlio delle Maree',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Su un mondo d\'acqua hai imparato a nuotare prima che a '
+        'camminare: correnti, onde e freddo degli abissi non ti fanno più '
+        'paura.',
+    effetto: 'Resistenza +1, Atletica +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Resistenza',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    costo: 0,
+    tag: const ['Fluido'],
+  ),
+
+  // Apprese su un pianeta.
+  Capacita(
+    nome: 'Abituato al Gelo',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto dove il freddo non dà tregua: sai coprirti, '
+        'razionare il calore e restare lucido anche quando le dita non '
+        'rispondono più.',
+    effetto: 'Resistenza +1, Sopravvivenza +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Resistenza',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Sopravvivenza', valore: 1),
+    costo: 0,
+    tag: const ['Freddo'],
+  ),
+  Capacita(
+    nome: 'Cercatore di Vene',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Hai passato l\'infanzia fra trivelle e gallerie: sai dove la '
+        'roccia cede, dove nasconde il metallo e come far ripartire una '
+        'macchina inceppata.',
+    effetto: 'Forza +1, Tecnologia +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Tecnologia', valore: 1),
+    costo: 0,
+    tag: const ['Minerario'],
+  ),
+  Capacita(
+    nome: 'Polmoni Temprati',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'L\'aria del tuo mondo è densa, pesante e a tratti velenosa: i '
+        'tuoi polmoni ne ricavano il necessario e il tuo corpo ha smesso '
+        'di lamentarsi.',
+    effetto: 'Resistenza +1, Tempra +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Resistenza',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    costo: 0,
+    tag: const ['Resistente'],
+  ),
+  Capacita(
+    nome: 'Pelle Arsa',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sotto un sole che brucia hai imparato a muoverti nelle ore '
+        'giuste, a trovare l\'acqua dove non sembra esserci e a non cedere '
+        'alla sete.',
+    effetto: 'Volontà +1, Sopravvivenza +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Sopravvivenza', valore: 1),
+    costo: 0,
+    tag: const ['Ardente'],
+  ),
+  Capacita(
+    nome: 'Crocevia di Popoli',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto fra cento lingue e mille usanze: capisci al volo '
+        'chi hai davanti e trovi sempre un modo per farti capire.',
+    effetto: 'Socialità +1, Intuizione +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Socialità',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Intuizione', valore: 1),
+    costo: 0,
+    tag: const ['Diversificato'],
+  ),
+  Capacita(
+    nome: 'Spirito Pioniere',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Vieni da un mondo ancora da costruire: dove manca qualcosa ti '
+        'rimbocchi le maniche e lo fai, prima che qualcuno te lo chieda.',
+    effetto: 'Iniziativa +1, Atletica +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Iniziativa',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    costo: 0,
+    tag: const ['Coloniale'],
+  ),
+  Capacita(
+    nome: 'Occhio della Tempesta',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Hai visto tempeste grandi come continenti e hai imparato a '
+        'passarci attraverso: quando tutto si agita, tu tieni la rotta.',
+    effetto: 'Volontà +1, Pilotaggio +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Pilotaggio', valore: 1),
+    costo: 0,
+    tag: const ['Tempestoso'],
+  ),
+  Capacita(
+    nome: 'Etichetta di Corte',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto fra ricevimenti, inchini e alleanze sussurrate: sai '
+        'cosa dire, a chi dirlo e soprattutto cosa tacere.',
+    effetto: 'Socialità +1, Astuzia +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Socialità',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Astuzia', valore: 1),
+    costo: 0,
+    tag: const ['Elegante'],
+  ),
+  Capacita(
+    nome: 'Abitudine al Silenzio',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sul tuo mondo il rumore è un lusso o un pericolo: ti muovi piano, '
+        'ascolti tutto e senti arrivare gli altri molto prima che loro '
+        'sentano te.',
+    effetto: 'Iniziativa +1, Furtività +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Iniziativa',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Furtività', valore: 1),
+    costo: 0,
+    tag: const ['Silenzioso'],
+  ),
+  Capacita(
+    nome: 'Custode di Segreti',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Dove sei nato ogni parola ha un prezzo: sai tenere un segreto, '
+        'riconoscere una menzogna e raccontarne una quando serve.',
+    effetto: 'Intelletto +1, Inganno +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Intelletto',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Inganno', valore: 1),
+    costo: 0,
+    tag: const ['Segreto'],
+  ),
+  Capacita(
+    nome: 'Scuola Tattica',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sul tuo pianeta anche i giochi dei bambini sono manovre: leggi un '
+        'campo di battaglia al primo sguardo e sai dove mettere ognuno.',
+    effetto: 'Intelletto +1, Comando +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Intelletto',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Comando', valore: 1),
+    costo: 0,
+    tag: const ['Tattico'],
+  ),
+  Capacita(
+    nome: 'Vita di Regole',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto fra orari, gerarchie e regolamenti scritti: studi '
+        'con metodo e non molli un lavoro finché non è fatto come si deve.',
+    effetto: 'Volontà +1, Istruzione +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Istruzione', valore: 1),
+    costo: 0,
+    tag: const ['Rigoroso'],
+  ),
+  Capacita(
+    nome: 'Calma degli Abissi',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Le profondità del tuo mondo ti hanno insegnato a restare immobile '
+        'e attento: nel buio e nel silenzio cogli quello che agli altri '
+        'sfugge.',
+    effetto: 'Volontà +1, Percezione +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    costo: 0,
+    tag: const ['Profondo'],
+  ),
+  Capacita(
+    nome: 'Mente Analitica',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sul tuo mondo si ragiona prima di agire: scomponi ogni problema in '
+        'pezzi, trovi quello che non torna e lo segui fino in fondo.',
+    effetto: 'Intelletto +1, Investigazione +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Intelletto',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Investigazione', valore: 1),
+    costo: 0,
+    tag: const ['Analitico'],
+  ),
+  Capacita(
+    nome: 'Mani da Tecnico',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto fra officine e laboratori: le tue dita trovano da '
+        'sole il cavo giusto e rimettono in funzione ciò che altri '
+        'butterebbero.',
+    effetto: 'Agilità +1, Tecnologia +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Tecnologia', valore: 1),
+    costo: 0,
+    tag: const ['Tecnico'],
+  ),
+  Capacita(
+    nome: 'Riflessi Taglienti',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Dove sei cresciuto vince chi colpisce per primo: reagisci prima di '
+        'pensare, e la tua lama arriva sempre un attimo prima dell\'altra.',
+    effetto: 'Iniziativa +1, Mischia Leggera +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Iniziativa',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Mischia Leggera', valore: 1),
+    costo: 0,
+    tag: const ['Rapido'],
+  ),
+  Capacita(
+    nome: 'Come l\'Acqua',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Il tuo mondo cambia di continuo e tu con lui: ti adatti a persone, '
+        'luoghi e situazioni nuove come se ci fossi sempre stato.',
+    effetto: 'Agilità +1, Intuizione +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Intuizione', valore: 1),
+    costo: 0,
+    tag: const ['Adattivo'],
+  ),
+  Capacita(
+    nome: 'Orgoglio Indomito',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Il tuo popolo non si inchina a nessuno: il portamento che hai '
+        'ereditato basta a far abbassare lo sguardo a chi ti sta di fronte.',
+    effetto: 'Forza +1, Intimidazione +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Intimidazione', valore: 1),
+    costo: 0,
+    tag: const ['Fiero'],
+  ),
+  Capacita(
+    nome: 'Risonanza Mistica',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sul tuo mondo il confine fra percezione e presagio è sottile: '
+        'senti le intenzioni degli altri e l\'eco dei luoghi prima ancora '
+        'di vederli.',
+    effetto: 'Volontà +1, Intuizione +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Intuizione', valore: 1),
+    costo: 0,
+    tag: const ['Mistico'],
+  ),
+  Capacita(
+    nome: 'Equilibrio Perfetto',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sul tuo mondo tutto è misura e bilanciamento, anche il corpo: non '
+        'perdi mai l\'equilibrio, né sui piedi né in una discussione.',
+    effetto: 'Agilità +1, Atletica +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    costo: 0,
+    tag: const ['Equilibrato'],
+  ),
+  Capacita(
+    nome: 'Mediatore Nato',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sei cresciuto dove ogni lite si risolve parlando: trovi il punto '
+        'd\'incontro fra due posizioni prima ancora che le parti lo '
+        'cerchino.',
+    effetto: 'Socialità +1, Persuasione +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Socialità',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Persuasione', valore: 1),
+    costo: 0,
+    tag: const ['Diplomatico'],
+  ),
+  Capacita(
+    nome: 'Viandante',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'La tua gente non resta mai a lungo nello stesso posto: sai sempre '
+        'dove dormire, cosa mangiare e quando è il momento di ripartire.',
+    effetto: 'Iniziativa +1, Sopravvivenza +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Iniziativa',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Sopravvivenza', valore: 1),
+    costo: 0,
+    tag: const ['Errante'],
+  ),
+  Capacita(
+    nome: 'Memoria degli Antichi',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Il tuo mondo è più vecchio della sua storia scritta: sei cresciuto '
+        'fra rovine, archivi e racconti che altrove nessuno ricorda più.',
+    effetto: 'Intelletto +1, Istruzione +1',
+    modificatoreCaratteristica: const Modificatore(
+      nome: 'Intelletto',
+      valore: 1,
+    ),
+    modificatoreAbilita: const Modificatore(nome: 'Istruzione', valore: 1),
+    costo: 0,
+    tag: const ['Antico'],
+  ),
+  Capacita(
+    nome: 'Cacciatore nel Buio',
+    tipo: TipoCapacita.pianeta,
+    descrizione:
+        'Sul tuo mondo la luce è poca e sopravvive chi sa cacciare: vedi '
+        'nel buio quanto basta e sai aspettare il momento giusto per '
+        'colpire.',
+    effetto: 'Agilità +1, Percezione +1',
+    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    costo: 0,
+    tag: const ['Oscuro'],
   ),
 
   // Capacità da Impianto: non si comprano, le concede un impianto

@@ -1,11 +1,16 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'pianeta.dart';
 import 'capacita.dart';
+
+part 'sistema.g.dart';
 
 /// Modello/Sistema
 ///
 /// Nota: il campo "Mappa" (immagine) è rappresentato come percorso opzionale
 /// a un asset ([mappaAssetPath]), da valorizzare quando le mappe saranno
 /// disponibili.
+@JsonSerializable()
 class Sistema {
   final String nome;
   final String governo;
@@ -23,27 +28,8 @@ class Sistema {
     required this.tag,
   });
 
-  factory Sistema.fromJson(Map<String, dynamic> json) {
-    return Sistema(
-      nome: json['nome'] as String,
-      governo: json['governo'] as String,
-      pianeti: (json['pianeti'] as List<dynamic>? ?? [])
-          .map((e) => Pianeta.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      capacitaDelSistema: (json['capacitaDelSistema'] as List<dynamic>? ?? [])
-          .map((e) => Capacita.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      mappaAssetPath: json['mappaAssetPath'] as String?,
-      tag: json['tag'] as String,
-    );
-  }
+  factory Sistema.fromJson(Map<String, dynamic> json) =>
+      _$SistemaFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'governo': governo,
-    'pianeti': pianeti.map((p) => p.toJson()).toList(),
-    'capacitaDelSistema': capacitaDelSistema.map((c) => c.toJson()).toList(),
-    'mappaAssetPath': mappaAssetPath,
-    'tag': tag,
-  };
+  Map<String, dynamic> toJson() => _$SistemaToJson(this);
 }

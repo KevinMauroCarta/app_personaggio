@@ -1,5 +1,9 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'armi/arma.dart';
 import 'armatura.dart';
+
+part 'equipaggiamento.g.dart';
 
 /// Modello/Equipaggiamento
 ///
@@ -8,6 +12,7 @@ import 'armatura.dart';
 ///
 /// L'Influenza non sta qui: è ricavata dalla Socialità e vive come
 /// getter in Modello/Scheda, accanto a Grinta e Fermezza.
+@JsonSerializable()
 class Equipaggiamento {
   final List<Arma> armi;
   final Armatura? armatura;
@@ -21,23 +26,8 @@ class Equipaggiamento {
     this.ricchezza = 0,
   });
 
-  factory Equipaggiamento.fromJson(Map<String, dynamic> json) {
-    return Equipaggiamento(
-      armi: (json['armi'] as List<dynamic>? ?? [])
-          .map((e) => Arma.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      armatura: json['armatura'] == null
-          ? null
-          : Armatura.fromJson(json['armatura'] as Map<String, dynamic>),
-      oggetti: (json['oggetti'] as List<dynamic>? ?? []).cast<String>(),
-      ricchezza: json['ricchezza'] as int? ?? 0,
-    );
-  }
+  factory Equipaggiamento.fromJson(Map<String, dynamic> json) =>
+      _$EquipaggiamentoFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'armi': armi.map((a) => a.toJson()).toList(),
-    'armatura': armatura?.toJson(),
-    'oggetti': oggetti,
-    'ricchezza': ricchezza,
-  };
+  Map<String, dynamic> toJson() => _$EquipaggiamentoToJson(this);
 }

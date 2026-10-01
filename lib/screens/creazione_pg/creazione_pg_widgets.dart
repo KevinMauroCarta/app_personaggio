@@ -454,3 +454,48 @@ class DropdownConDettagli extends StatelessWidget {
     );
   }
 }
+
+/// Campo già compilato e non modificabile, con a fianco il Pulsante
+/// Info: per le scelte che non c'è da fare perché arrivano con un'altra
+/// (es. la Capacità di Background, una sola per ogni background).
+///
+/// Ha la forma di [DropdownConDettagli], così resta allineato alle
+/// tendine vicine, ma al posto della freccia c'è un lucchetto.
+class CampoFissoConDettagli extends StatelessWidget {
+  final String label;
+  final String valore;
+  final WidgetBuilder contenutoInfo;
+
+  const CampoFissoConDettagli({
+    super.key,
+    required this.label,
+    required this.valore,
+    required this.contenutoInfo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: InputDecorator(
+            decoration: InputDecoration(
+              labelText: label,
+              border: const OutlineInputBorder(),
+              suffixIcon: const Icon(Icons.lock_outline),
+            ),
+            // Lo stile del valore scelto nelle tendine: con quello di
+            // base il campo veniva più basso e col testo più piccolo.
+            child: Text(
+              valore,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+        ),
+        InfoButton(titolo: label, contenutoBuilder: contenutoInfo),
+      ],
+    );
+  }
+}

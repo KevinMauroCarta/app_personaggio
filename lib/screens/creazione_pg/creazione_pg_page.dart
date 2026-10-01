@@ -12,7 +12,6 @@ import '../../models/potere_psionico.dart';
 import '../../models/razza.dart';
 import '../../models/sistema.dart';
 import '../../enums/genere.dart';
-import '../../enums/tipo_capacita.dart';
 import '../../data/lista_razze.dart';
 import '../../data/lista_background.dart';
 import '../../data/lista_sistemi.dart';
@@ -80,9 +79,15 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
   late Map<String, int> _valoriCaratteristiche;
   late Map<String, int> _valoriAbilita;
   String? _talentoSelezionato;
-  String? _capacitaRazzaSelezionata;
+
+  /// Una per campo "Capacità di Razza N": se ne prendono
+  /// [capacitaRazzaDaScegliere], tutte diverse.
+  final List<String?> _capacitaRazzaSelezionate = List.filled(
+    capacitaRazzaDaScegliere,
+    null,
+  );
   String? _capacitaSistemaSelezionata;
-  String? _capacitaBackgroundSelezionata;
+  String? _capacitaPianetaSelezionata;
 
   /// Ogni elemento rappresenta un campo Capacità Generica (dropdown).
   /// Parte con un singolo campo vuoto; ogni volta che un campo viene
@@ -160,23 +165,23 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
         ? null
         : personaggio.talenti.first.nome;
 
-    _capacitaRazzaSelezionata = _primoOppureNull(
-      personaggio.capacita,
-      (c) => c.tipo == TipoCapacita.razza,
-    )?.nome;
-    _capacitaSistemaSelezionata = _primoOppureNull(
-      personaggio.capacita,
-      (c) => c.tipo == TipoCapacita.sistema,
-    )?.nome;
-    _capacitaBackgroundSelezionata = _primoOppureNull(
-      personaggio.capacita,
-      (c) => c.tipo == TipoCapacita.background,
-    )?.nome;
+    // Le opzioni sono quelle che Pagina 2 offrirà: un valore precompilato
+    // che non fosse fra le voci della sua tendina la manderebbe in errore.
+    final ripartite = ripartisciCapacita(personaggio.capacita, [
+      for (var i = 0; i < capacitaRazzaDaScegliere; i++)
+        capacitaRazzaOptions[_razzaSelezionata] ?? const [],
+      capacitaSistemaOptions[_sistemaSelezionato] ?? const [],
+      capacitaPianetaOptions(_sistemaSelezionato, _pianetaSelezionato),
+      [?capacitaDiBackground(_backgroundSelezionato)],
+    ]);
+    // La Capacità di Background non si legge da qui: arriva sempre con
+    // il background.
+    final [...razza, sistema, pianeta, _] = ripartite.campi;
+    _capacitaRazzaSelezionate.setAll(0, razza);
+    _capacitaSistemaSelezionata = sistema;
+    _capacitaPianetaSelezionata = pianeta;
 
-    final capacitaGenericheEsistenti = personaggio.capacita
-        .where((c) => c.tipo == TipoCapacita.generica)
-        .map((c) => c.nome)
-        .toList();
+    final capacitaGenericheEsistenti = ripartite.generiche;
     _capacitaGenericheSelezionate
       ..clear()
       ..addAll(capacitaGenericheEsistenti);
@@ -273,10 +278,13 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
   }
 
   /// Applica ai PE disponibili il passaggio da [precedente] a [nuova]
-  /// nella scelta di una capacità: la capacità lasciata restituisce il
-  /// suo costo, quella presa lo scala (Modello/Capacità.costo). Le
-  /// Capacità di Razza e di Sistema costano sempre 0, quindi passano di
-  /// qui senza muovere nulla.
+  /// nella scelta di una Capacità Generica: la capacità lasciata
+  /// restituisce il suo costo, quella presa lo scala (Modello/Capacità.costo).
+  ///
+  /// Solo le Generiche si pagano. Quelle di Razza, di Sistema, del
+  /// Pianeta e di Background arrivano dalle scelte di Pagina 1 e non
+  /// muovono PE, anche quando la stessa capacità esiste come Generica
+  /// (Addestramento Psichico, offerta da alcuni sistemi).
   ///
   /// Da chiamare solo dentro un setState, e solo sui cambiamenti: le
   /// capacità già possedute all'apertura della Modifica sono già state
@@ -454,7 +462,25 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
     );
   }
 
+  /// I campi obbligatori di Pagina 2 non ancora compilati: il Talento e
+  /// le Capacità di Razza, di Sistema e del Pianeta. Manca la Capacità di
+  /// Background perché non si sceglie: arriva già presa con il
+  /// background, obbligatorio in Pagina 1.
+  List<String> get _campiMancantiPagina2 => [
+    if (_talentoSelezionato == null) 'Talento',
+    for (var i = 0; i < capacitaRazzaDaScegliere; i++)
+      if (_capacitaRazzaSelezionate[i] == null) 'Capacità di Razza ${i + 1}',
+    if (_capacitaSistemaSelezionata == null) 'Capacità di Sistema',
+    if (_capacitaPianetaSelezionata == null) 'Capacità del Pianeta',
+  ];
+
   void _vaiARiepilogo() {
+    final mancanti = _campiMancantiPagina2;
+    if (mancanti.isNotEmpty) {
+      _avvisa('Compila prima: ${mancanti.join(', ')}');
+      return;
+    }
+
     _pageController.animateToPage(
       2,
       duration: const Duration(milliseconds: 300),
@@ -510,18 +536,26 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
       : [listaTalenti.firstWhere((t) => t.nome == _talentoSelezionato)];
 
   /// Le Capacità di Razza vengono cercate nella lista propria della
-  /// razza scelta, quelle di Sistema nella lista propria del sistema
-  /// scelto, quella di Background è l'unica del background scelto, e
-  /// quelle Generiche stanno nell'elenco completo di Lista/Capacità.
+  /// razza scelta, quelle di Sistema e del Pianeta nelle liste proprie
+  /// del sistema e del pianeta scelti, quella di Background è l'unica del
+  /// background scelto, e quelle Generiche stanno nell'elenco completo di
+  /// Lista/Capacità.
+  ///
+  /// L'ordine - Razza, Sistema, Pianeta, Background, Generiche - è quello
+  /// con cui il personaggio viene salvato, e la Modifica ci conta per
+  /// rimettere ogni capacità nel suo campo (vedi [ripartisciCapacita]).
   List<Capacita> get _capacita => <Capacita>[
-    if (_capacitaRazzaSelezionata != null)
-      _razza.capacita.firstWhere((c) => c.nome == _capacitaRazzaSelezionata),
+    for (final nome in _capacitaRazzaSelezionate.whereType<String>())
+      _razza.capacita.firstWhere((c) => c.nome == nome),
     if (_capacitaSistemaSelezionata != null)
       _sistema.capacitaDelSistema.firstWhere(
         (c) => c.nome == _capacitaSistemaSelezionata,
       ),
-    if (_capacitaBackgroundSelezionata != null)
-      _background.capacitaDiBackground,
+    if (_capacitaPianetaSelezionata != null)
+      _pianeta.capacitaDelPianeta.firstWhere(
+        (c) => c.nome == _capacitaPianetaSelezionata,
+      ),
+    if (_backgroundSelezionato != null) _background.capacitaDiBackground,
     for (final nome in _capacitaGenericheSelezionate.whereType<String>())
       listaCapacita.firstWhere((c) => c.nome == nome),
   ];
@@ -558,7 +592,7 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
       return;
     }
 
-    final mancanti = _campiMancantiPagina1;
+    final mancanti = [..._campiMancantiPagina1, ..._campiMancantiPagina2];
     if (mancanti.isNotEmpty) {
       _avvisa('Compila prima: ${mancanti.join(', ')}');
       return;
@@ -709,30 +743,37 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
               backgroundSelezionato: _backgroundSelezionato,
               sistemaSelezionato: _sistemaSelezionato,
               pianetaSelezionato: _pianetaSelezionato,
+              // La tendina avvisa anche quando si riprende la voce già
+              // scelta: senza i controlli sull'uguaglianza, riaprirla
+              // cancellerebbe le capacità che ne dipendono.
               onRazzaChanged: (v) => _cambiaScelta(() {
+                if (v == _razzaSelezionata) return;
                 _razzaSelezionata = v;
-                // Cambiando razza, la Capacità di Razza va reimpostata
-                _applicaCostoCapacita(_capacitaRazzaSelezionata, null);
-                _capacitaRazzaSelezionata = null;
+                // Cambiando razza, le Capacità di Razza vanno riscelte.
+                _capacitaRazzaSelezionate.fillRange(
+                  0,
+                  capacitaRazzaDaScegliere,
+                  null,
+                );
               }),
               onGenereChanged: (v) => setState(() => _genereSelezionato = v),
-              onBackgroundChanged: (v) => _cambiaScelta(() {
-                _backgroundSelezionato = v;
-                // Ogni background ha una sola Capacità di Background, ed è
-                // un'altra: cambiando background va reimpostata.
-                _applicaCostoCapacita(_capacitaBackgroundSelezionata, null);
-                _capacitaBackgroundSelezionata = null;
-              }),
+              // La Capacità di Background segue da sola il background.
+              onBackgroundChanged: (v) =>
+                  _cambiaScelta(() => _backgroundSelezionato = v),
               onSistemaChanged: (v) => _cambiaScelta(() {
+                if (v == _sistemaSelezionato) return;
                 _sistemaSelezionato = v;
-                // Cambiando sistema, pianeta e Capacità di Sistema vanno
-                // reimpostati.
+                // Cambiando sistema, pianeta e Capacità di Sistema e del
+                // Pianeta vanno reimpostati.
                 _pianetaSelezionato = null;
-                _applicaCostoCapacita(_capacitaSistemaSelezionata, null);
                 _capacitaSistemaSelezionata = null;
+                _capacitaPianetaSelezionata = null;
               }),
-              onPianetaChanged: (v) =>
-                  _cambiaScelta(() => _pianetaSelezionato = v),
+              onPianetaChanged: (v) => _cambiaScelta(() {
+                if (v == _pianetaSelezionato) return;
+                _pianetaSelezionato = v;
+                _capacitaPianetaSelezionata = null;
+              }),
               onAvanti: _vaiAPagina2,
             ),
             1 => Pagina2GestioneEsperienza(
@@ -749,22 +790,17 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
                   _cambiaScelta(() => _talentoSelezionato = v),
               razzaSelezionata: _razzaSelezionata,
               sistemaSelezionato: _sistemaSelezionato,
+              pianetaSelezionato: _pianetaSelezionato,
               backgroundSelezionato: _backgroundSelezionato,
-              capacitaRazzaSelezionata: _capacitaRazzaSelezionata,
-              onCapacitaRazzaChanged: (v) => _cambiaScelta(() {
-                _applicaCostoCapacita(_capacitaRazzaSelezionata, v);
-                _capacitaRazzaSelezionata = v;
-              }),
+              capacitaRazzaSelezionate: _capacitaRazzaSelezionate,
+              onCapacitaRazzaChanged: (indice, v) =>
+                  _cambiaScelta(() => _capacitaRazzaSelezionate[indice] = v),
               capacitaSistemaSelezionata: _capacitaSistemaSelezionata,
-              onCapacitaSistemaChanged: (v) => _cambiaScelta(() {
-                _applicaCostoCapacita(_capacitaSistemaSelezionata, v);
-                _capacitaSistemaSelezionata = v;
-              }),
-              capacitaBackgroundSelezionata: _capacitaBackgroundSelezionata,
-              onCapacitaBackgroundChanged: (v) => _cambiaScelta(() {
-                _applicaCostoCapacita(_capacitaBackgroundSelezionata, v);
-                _capacitaBackgroundSelezionata = v;
-              }),
+              onCapacitaSistemaChanged: (v) =>
+                  _cambiaScelta(() => _capacitaSistemaSelezionata = v),
+              capacitaPianetaSelezionata: _capacitaPianetaSelezionata,
+              onCapacitaPianetaChanged: (v) =>
+                  _cambiaScelta(() => _capacitaPianetaSelezionata = v),
               capacitaGenericheSelezionate: _capacitaGenericheSelezionate,
               onCapacitaGenericaChanged: _onCapacitaGenericaSelezionata,
               onCapacitaGenericaRimossa: _rimuoviCapacitaGenerica,
@@ -787,9 +823,10 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
               valoriCaratteristiche: _valoriCaratteristiche,
               valoriAbilita: _valoriAbilita,
               talentoSelezionato: _talentoSelezionato,
-              capacitaRazzaSelezionata: _capacitaRazzaSelezionata,
+              capacitaRazzaSelezionate: _capacitaRazzaSelezionate,
               capacitaSistemaSelezionata: _capacitaSistemaSelezionata,
-              capacitaBackgroundSelezionata: _capacitaBackgroundSelezionata,
+              capacitaPianetaSelezionata: _capacitaPianetaSelezionata,
+              capacitaBackground: capacitaDiBackground(_backgroundSelezionato),
               capacitaGeneriche: _capacitaGenericheSelezionate
                   .whereType<String>()
                   .toList(),

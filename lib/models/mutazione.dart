@@ -1,6 +1,11 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'modificatore.dart';
 
+part 'mutazione.g.dart';
+
 /// Modello/Mutazione
+@JsonSerializable()
 class Mutazione {
   final String nome;
   final String descrizione;
@@ -14,23 +19,8 @@ class Mutazione {
     this.modificatoreCaratteristica,
   });
 
-  factory Mutazione.fromJson(Map<String, dynamic> json) {
-    return Mutazione(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String,
-      effetto: json['effetto'] as String,
-      modificatoreCaratteristica: json['modificatoreCaratteristica'] == null
-          ? null
-          : Modificatore.fromJson(
-              json['modificatoreCaratteristica'] as Map<String, dynamic>,
-            ),
-    );
-  }
+  factory Mutazione.fromJson(Map<String, dynamic> json) =>
+      _$MutazioneFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'effetto': effetto,
-    'modificatoreCaratteristica': modificatoreCaratteristica?.toJson(),
-  };
+  Map<String, dynamic> toJson() => _$MutazioneToJson(this);
 }

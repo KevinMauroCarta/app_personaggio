@@ -1,4 +1,9 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'lesione_traumatica.g.dart';
+
 /// Modello/Lesione_Traumatica
+@JsonSerializable()
 class LesioneTraumatica {
   final String nome;
   final String descrizione;
@@ -10,17 +15,8 @@ class LesioneTraumatica {
     required this.effetto,
   });
 
-  factory LesioneTraumatica.fromJson(Map<String, dynamic> json) {
-    return LesioneTraumatica(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String,
-      effetto: json['effetto'] as String,
-    );
-  }
+  factory LesioneTraumatica.fromJson(Map<String, dynamic> json) =>
+      _$LesioneTraumaticaFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'effetto': effetto,
-  };
+  Map<String, dynamic> toJson() => _$LesioneTraumaticaToJson(this);
 }

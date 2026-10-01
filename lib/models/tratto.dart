@@ -1,4 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/ambito_tratto.dart';
+
+part 'tratto.g.dart';
 
 /// Modello/Tratto
 ///
@@ -10,6 +14,7 @@ import '../enums/ambito_tratto.dart';
 /// Il motivo è che alcuni tratti valgono sia per le armi sia per le
 /// armature: tenerli separati significherebbe scriverne il testo due
 /// volte, con il rischio che le due copie divergano.
+@JsonSerializable()
 class Tratto {
   final String nome;
   final String descrizione;
@@ -17,6 +22,7 @@ class Tratto {
 
   /// Dove si applica il tratto. Contiene entrambi i valori se il tratto
   /// vale sia per le armi sia per le armature.
+  @JsonKey(defaultValue: <AmbitoTratto>[])
   final List<AmbitoTratto> ambiti;
 
   const Tratto({
@@ -30,21 +36,7 @@ class Tratto {
 
   bool get valePerArmature => ambiti.contains(AmbitoTratto.armatura);
 
-  factory Tratto.fromJson(Map<String, dynamic> json) {
-    return Tratto(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String,
-      effetto: json['effetto'] as String,
-      ambiti: (json['ambiti'] as List<dynamic>? ?? [])
-          .map((e) => AmbitoTratto.values.byName(e as String))
-          .toList(),
-    );
-  }
+  factory Tratto.fromJson(Map<String, dynamic> json) => _$TrattoFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'effetto': effetto,
-    'ambiti': ambiti.map((a) => a.name).toList(),
-  };
+  Map<String, dynamic> toJson() => _$TrattoToJson(this);
 }

@@ -1,4 +1,12 @@
+import 'package:json_annotation/json_annotation.dart';
+
+import '../../enums/abilita_arma.dart';
+import '../../enums/rarita.dart';
+import '../../enums/tipo_danno.dart';
+import '../tratto.dart';
 import 'arma.dart';
+
+part 'arma_distanza.g.dart';
 
 /// Modello/Armi/ArmaDistanza
 ///
@@ -6,14 +14,19 @@ import 'arma.dart';
 /// gittate - [gittataCorta], [gittataMedia], [gittataLunga], tre valori
 /// distinti e non un intervallo - e la [raffica], che solo le armi a
 /// distanza possono avere.
+@JsonSerializable()
 class ArmaDistanza extends Arma {
   /// Chiave con cui l'arma si riconosce nel JSON salvato.
   static const String tipo = 'distanza';
 
+  @JsonKey(readValue: _distanzaDaJson)
   final int gittataCorta;
+  @JsonKey(readValue: _distanzaDaJson)
   final int gittataMedia;
+  @JsonKey(readValue: _distanzaDaJson)
   final int gittataLunga;
 
+  @JsonKey(defaultValue: false)
   final bool raffica;
 
   const ArmaDistanza({
@@ -40,43 +53,22 @@ class ArmaDistanza extends Arma {
   @override
   String get descrizioneTipo => 'Distanza';
 
-  factory ArmaDistanza.fromJson(Map<String, dynamic> json) {
-    final comuni = CampiComuniArma.fromJson(json);
-    // Le armi scritte prima della divisione in due tipi tenevano le tre
-    // gittate dentro un oggetto Gittata.
-    final vecchia = json['gittata'] is Map<String, dynamic>
-        ? json['gittata'] as Map<String, dynamic>
-        : const <String, dynamic>{};
-
-    // 'gittataCorta' nel formato nuovo, 'corta' dentro la vecchia Gittata.
-    int distanza(String chiave, String chiaveVecchia) =>
-        json[chiave] as int? ?? vecchia[chiaveVecchia] as int? ?? 0;
-
-    return ArmaDistanza(
-      nome: comuni.nome,
-      abilitaAssociata: comuni.abilitaAssociata,
-      danno: comuni.danno,
-      tipoDanno: comuni.tipoDanno,
-      dadiExtra: comuni.dadiExtra,
-      valorePenetrazione: comuni.valorePenetrazione,
-      tratti: comuni.tratti,
-      tag: comuni.tag,
-      valore: comuni.valore,
-      rarita: comuni.rarita,
-      gittataCorta: distanza('gittataCorta', 'corta'),
-      gittataMedia: distanza('gittataMedia', 'media'),
-      gittataLunga: distanza('gittataLunga', 'lunga'),
-      raffica: json['raffica'] as bool? ?? false,
-    );
-  }
+  factory ArmaDistanza.fromJson(Map<String, dynamic> json) =>
+      _$ArmaDistanzaFromJson(json);
 
   @override
   Map<String, dynamic> toJson() => {
-    ...campiComuniJson(),
+    ..._$ArmaDistanzaToJson(this),
     'tipo': tipo,
-    'gittataCorta': gittataCorta,
-    'gittataMedia': gittataMedia,
-    'gittataLunga': gittataLunga,
-    'raffica': raffica,
   };
+}
+
+/// Una delle tre gittate. Le armi scritte prima della divisione in due
+/// tipi le tenevano dentro un oggetto Gittata: 'gittataCorta' nel formato
+/// nuovo era 'corta' in quello vecchio.
+Object? _distanzaDaJson(Map<dynamic, dynamic> json, String chiave) {
+  if (json[chiave] != null) return json[chiave];
+  final vecchia = json['gittata'];
+  final chiaveVecchia = chiave.replaceFirst('gittata', '').toLowerCase();
+  return (vecchia is Map ? vecchia[chiaveVecchia] : null) ?? 0;
 }

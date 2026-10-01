@@ -1,6 +1,10 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/rarita.dart';
 import 'capacita.dart';
 import 'modificatore.dart';
+
+part 'chip_neurale.g.dart';
 
 /// Modello/ChipNeurale
 ///
@@ -15,9 +19,12 @@ import 'modificatore.dart';
 /// e Mutazioni (Servizio/EffettiPersonaggio): installato il chip, la
 /// Caratteristica o l'Abilità sale; disinstallato, scende. Lo stesso per
 /// la Capacità concessa.
+@JsonSerializable()
 class ChipNeurale {
   final String nome;
+  @JsonKey(defaultValue: '')
   final String descrizione;
+  @JsonKey(defaultValue: '')
   final String effetto;
   final Modificatore? modificatoreCaratteristica;
   final Modificatore? modificatoreAbilita;
@@ -26,8 +33,10 @@ class ChipNeurale {
   final Capacita? capacita;
 
   /// Quanto costa procurarselo, sulla stessa scala di Modello/Armi/Arma.
+  @JsonKey(defaultValue: 0)
   final int valore;
 
+  @JsonKey(defaultValue: Rarita.comune)
   final Rarita rarita;
 
   const ChipNeurale({
@@ -47,36 +56,8 @@ class ChipNeurale {
     ?modificatoreAbilita,
   ];
 
-  factory ChipNeurale.fromJson(Map<String, dynamic> json) {
-    return ChipNeurale(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String? ?? '',
-      effetto: json['effetto'] as String? ?? '',
-      modificatoreCaratteristica: _modificatore(
-        json['modificatoreCaratteristica'],
-      ),
-      modificatoreAbilita: _modificatore(json['modificatoreAbilita']),
-      capacita: json['capacita'] == null
-          ? null
-          : Capacita.fromJson(json['capacita'] as Map<String, dynamic>),
-      valore: json['valore'] as int? ?? 0,
-      rarita: json['rarita'] == null
-          ? Rarita.comune
-          : Rarita.values.byName(json['rarita'] as String),
-    );
-  }
+  factory ChipNeurale.fromJson(Map<String, dynamic> json) =>
+      _$ChipNeuraleFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'effetto': effetto,
-    'modificatoreCaratteristica': modificatoreCaratteristica?.toJson(),
-    'modificatoreAbilita': modificatoreAbilita?.toJson(),
-    'capacita': capacita?.toJson(),
-    'valore': valore,
-    'rarita': rarita.name,
-  };
+  Map<String, dynamic> toJson() => _$ChipNeuraleToJson(this);
 }
-
-Modificatore? _modificatore(Object? json) =>
-    json == null ? null : Modificatore.fromJson(json as Map<String, dynamic>);

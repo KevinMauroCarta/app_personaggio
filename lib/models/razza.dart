@@ -1,19 +1,27 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/taglia.dart';
 import 'capacita.dart';
+
+part 'razza.g.dart';
 
 /// Modello/Razza
 ///
 /// [taglia] alimenta Scheda.taglia (Obiettivo/Taglia della scheda).
+@JsonSerializable()
 class Razza {
   final String nome;
   final String descrizione;
 
-  /// Capacità di Razza fra cui il personaggio ne sceglie una in
-  /// Creazione: sono le uniche opzioni offerte dal dropdown "Capacità di
-  /// Razza" (APP/Pagina/Creazione-PG/Pagina_2).
+  /// Capacità di Razza fra cui il personaggio ne sceglie due, diverse, in
+  /// Creazione: sono le uniche opzioni offerte dai dropdown "Capacità di
+  /// Razza 1" e "2" (APP/Pagina/Creazione-PG/Pagina_2).
   final List<Capacita> capacita;
 
   final String tag;
+
+  /// Le razze salvate prima che esistesse la taglia sono Medie.
+  @JsonKey(defaultValue: Taglia.media)
   final Taglia taglia;
 
   const Razza({
@@ -24,25 +32,7 @@ class Razza {
     required this.taglia,
   });
 
-  factory Razza.fromJson(Map<String, dynamic> json) {
-    return Razza(
-      nome: json['nome'] as String,
-      descrizione: json['descrizione'] as String,
-      capacita: (json['capacita'] as List<dynamic>? ?? [])
-          .map((e) => Capacita.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      tag: json['tag'] as String,
-      taglia: json['taglia'] is String
-          ? Taglia.values.byName(json['taglia'] as String)
-          : Taglia.media,
-    );
-  }
+  factory Razza.fromJson(Map<String, dynamic> json) => _$RazzaFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'descrizione': descrizione,
-    'capacita': capacita.map((c) => c.toJson()).toList(),
-    'tag': tag,
-    'taglia': taglia.name,
-  };
+  Map<String, dynamic> toJson() => _$RazzaToJson(this);
 }

@@ -1,3 +1,5 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../../enums/abilita_arma.dart';
 import '../../enums/rarita.dart';
 import '../../enums/tipo_danno.dart';
@@ -24,12 +26,17 @@ abstract class Arma {
   /// (Scheda.riservaDiDadi). Sta qui e non nelle sottoclassi perché
   /// mischia leggera e mischia pesante sono entrambe da mischia: il tipo
   /// di arma non basta a dedurla.
+  @JsonKey(readValue: Arma.abilitaDaJson)
   final AbilitaArma abilitaAssociata;
 
   final int danno;
 
   /// Se il danno è fisico o energetico: dipende da cosa colpisce, non da
   /// quanto (vedi [TipoDanno]).
+  ///
+  /// Le armi salvate prima di questo campo erano tutte segnaposto:
+  /// fisico è il caso di gran lunga più comune.
+  @JsonKey(defaultValue: TipoDanno.fisico)
   final TipoDanno tipoDanno;
 
   final int dadiExtra;
@@ -40,8 +47,10 @@ abstract class Arma {
   final List<String> tag;
 
   /// Quanto vale l'arma, per comprarla e venderla.
+  @JsonKey(defaultValue: 0)
   final int valore;
 
+  @JsonKey(defaultValue: Rarita.comune)
   final Rarita rarita;
 
   const Arma({
@@ -74,86 +83,25 @@ abstract class Arma {
     final tipo = json['tipo'] as String?;
     if (tipo == ArmaDistanza.tipo) return ArmaDistanza.fromJson(json);
     if (tipo == ArmaMischia.tipo) return ArmaMischia.fromJson(json);
-
-    final gittata = json['gittata'];
-    final aDistanza =
-        gittata is Map<String, dynamic> && gittata['corta'] != null;
-    return aDistanza ? ArmaDistanza.fromJson(json) : ArmaMischia.fromJson(json);
+    return _vecchiaADistanza(json)
+        ? ArmaDistanza.fromJson(json)
+        : ArmaMischia.fromJson(json);
   }
-
-  /// I campi comuni, da unire a quelli della sottoclasse.
-  Map<String, dynamic> campiComuniJson() => {
-    'nome': nome,
-    'abilitaAssociata': abilitaAssociata.name,
-    'danno': danno,
-    'tipoDanno': tipoDanno.name,
-    'dadiExtra': dadiExtra,
-    'valorePenetrazione': valorePenetrazione,
-    'tratti': tratti.map((t) => t.toJson()).toList(),
-    'tag': tag,
-    'valore': valore,
-    'rarita': rarita.name,
-  };
 
   Map<String, dynamic> toJson();
+
+  /// Legge [abilitaAssociata]. Le armi salvate prima che il campo
+  /// esistesse ricadono sulla scelta più probabile: Mira se l'arma
+  /// spara, Mischia Leggera se no.
+  static Object? abilitaDaJson(Map<dynamic, dynamic> json, String chiave) =>
+      json[chiave] ??
+      (_vecchiaADistanza(json) ? AbilitaArma.mira : AbilitaArma.mischiaLeggera)
+          .name;
 }
 
-/// I campi comuni letti dal JSON, usati dalle due sottoclassi.
-///
-/// Sta qui, fuori dalla classe, perché un costruttore generativo non può
-/// leggere membri dell'istanza che sta creando.
-class CampiComuniArma {
-  final String nome;
-  final AbilitaArma abilitaAssociata;
-  final int danno;
-  final TipoDanno tipoDanno;
-  final int dadiExtra;
-  final int valorePenetrazione;
-  final List<Tratto> tratti;
-  final List<String> tag;
-  final int valore;
-  final Rarita rarita;
-
-  const CampiComuniArma({
-    required this.nome,
-    required this.abilitaAssociata,
-    required this.danno,
-    required this.tipoDanno,
-    required this.dadiExtra,
-    required this.valorePenetrazione,
-    required this.tratti,
-    required this.tag,
-    required this.valore,
-    required this.rarita,
-  });
-
-  factory CampiComuniArma.fromJson(Map<String, dynamic> json) {
-    return CampiComuniArma(
-      nome: json['nome'] as String,
-      // Le armi salvate prima che il campo esistesse ricadono sulla
-      // scelta più probabile: Mira se l'arma spara, Mischia Leggera se no.
-      abilitaAssociata: json['abilitaAssociata'] == null
-          ? (json['gittata'] is Map<String, dynamic> &&
-                    (json['gittata'] as Map<String, dynamic>)['corta'] != null
-                ? AbilitaArma.mira
-                : AbilitaArma.mischiaLeggera)
-          : AbilitaArma.values.byName(json['abilitaAssociata'] as String),
-      danno: json['danno'] as int,
-      // Le armi salvate prima di questo campo erano tutte segnaposto:
-      // fisico è il caso di gran lunga più comune.
-      tipoDanno: json['tipoDanno'] == null
-          ? TipoDanno.fisico
-          : TipoDanno.values.byName(json['tipoDanno'] as String),
-      dadiExtra: json['dadiExtra'] as int? ?? 0,
-      valorePenetrazione: json['valorePenetrazione'] as int? ?? 0,
-      tratti: (json['tratti'] as List<dynamic>? ?? [])
-          .map((e) => Tratto.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      tag: (json['tag'] as List<dynamic>? ?? []).cast<String>(),
-      valore: json['valore'] as int? ?? 0,
-      rarita: json['rarita'] == null
-          ? Rarita.comune
-          : Rarita.values.byName(json['rarita'] as String),
-    );
-  }
+/// True se [json] è un'arma salvata prima della divisione in due tipi,
+/// con la vecchia gittata a oggetto e la distanza corta valorizzata.
+bool _vecchiaADistanza(Map<dynamic, dynamic> json) {
+  final gittata = json['gittata'];
+  return gittata is Map && gittata['corta'] != null;
 }

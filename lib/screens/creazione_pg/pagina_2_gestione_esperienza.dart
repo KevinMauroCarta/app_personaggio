@@ -7,7 +7,7 @@ import 'dettagli_modelli.dart';
 
 /// Contenuto della Pagina 2 (Gestione Esperienza) del flusso di
 /// creazione del personaggio: PX, caratteristiche, abilità, talento e
-/// capacità (di Razza, di Sistema, di Background, Generiche).
+/// capacità (di Razza, di Sistema, del Pianeta, di Background, Generiche).
 ///
 /// È un widget "stupido": riceve i valori attuali e notifica i
 /// cambiamenti tramite callback al widget che lo usa
@@ -27,20 +27,23 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
   final String? talentoSelezionato;
   final ValueChanged<String?> onTalentoChanged;
 
-  /// Razza, sistema e background scelti in Pagina 1: servono per
-  /// filtrare le Capacità di Razza/Sistema/Background disponibili.
+  /// Razza, sistema, pianeta e background scelti in Pagina 1: da loro
+  /// dipendono le Capacità offerte e, per il background, quella già
+  /// presa.
   final String? razzaSelezionata;
   final String? sistemaSelezionato;
+  final String? pianetaSelezionato;
   final String? backgroundSelezionato;
 
-  final String? capacitaRazzaSelezionata;
-  final ValueChanged<String?> onCapacitaRazzaChanged;
+  /// Una per campo "Capacità di Razza N".
+  final List<String?> capacitaRazzaSelezionate;
+  final void Function(int indice, String? valore) onCapacitaRazzaChanged;
 
   final String? capacitaSistemaSelezionata;
   final ValueChanged<String?> onCapacitaSistemaChanged;
 
-  final String? capacitaBackgroundSelezionata;
-  final ValueChanged<String?> onCapacitaBackgroundChanged;
+  final String? capacitaPianetaSelezionata;
+  final ValueChanged<String?> onCapacitaPianetaChanged;
 
   /// Ogni elemento rappresenta un campo Capacità Generica (dropdown).
   final List<String?> capacitaGenericheSelezionate;
@@ -75,13 +78,14 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
     required this.onTalentoChanged,
     required this.razzaSelezionata,
     required this.sistemaSelezionato,
+    required this.pianetaSelezionato,
     required this.backgroundSelezionato,
-    required this.capacitaRazzaSelezionata,
+    required this.capacitaRazzaSelezionate,
     required this.onCapacitaRazzaChanged,
     required this.capacitaSistemaSelezionata,
     required this.onCapacitaSistemaChanged,
-    required this.capacitaBackgroundSelezionata,
-    required this.onCapacitaBackgroundChanged,
+    required this.capacitaPianetaSelezionata,
+    required this.onCapacitaPianetaChanged,
     required this.capacitaGenericheSelezionate,
     required this.onCapacitaGenericaChanged,
     required this.onCapacitaGenericaRimossa,
@@ -95,30 +99,11 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final capacitaRazzaDisponibili = razzaSelezionata == null
-        ? const <String>[]
-        : (capacitaRazzaOptions[razzaSelezionata] ?? const <String>[]);
-
-    final capacitaSistemaDisponibili = sistemaSelezionato == null
-        ? const <String>[]
-        : (capacitaSistemaOptions[sistemaSelezionato] ?? const <String>[]);
-
-    final capacitaBackgroundDisponibili = backgroundSelezionato == null
-        ? const <String>[]
-        : (capacitaBackgroundOptions[backgroundSelezionato] ??
-              const <String>[]);
-
     // I Punti Esperienza restano visibili in fondo alla pagina anche
     // scorrendo: il contenuto scorre dentro l'Expanded, la barra PX no.
     return Column(
       children: [
-        Expanded(
-          child: _buildContenuto(
-            capacitaRazzaDisponibili,
-            capacitaSistemaDisponibili,
-            capacitaBackgroundDisponibili,
-          ),
-        ),
+        Expanded(child: _buildContenuto()),
         _buildBarraPx(context),
       ],
     );
@@ -168,11 +153,7 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
     );
   }
 
-  Widget _buildContenuto(
-    List<String> capacitaRazzaDisponibili,
-    List<String> capacitaSistemaDisponibili,
-    List<String> capacitaBackgroundDisponibili,
-  ) {
+  Widget _buildContenuto() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -252,94 +233,7 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          SezioneCollassabile(
-            titolo: 'Talenti e Capacità',
-            figli: [
-              _sottoSezione(
-                titolo: 'Talento',
-                figli: [
-                  DropdownConDettagli(
-                    label: 'Talento',
-                    valoreSelezionato: talentoSelezionato,
-                    opzioni: talentiOptions,
-                    descrizioni: talentiDescrizioni,
-                    contenutoInfo: (opzioni) =>
-                        DettagliTalento(talenti: talentiDaNomi(opzioni)),
-                    onChanged: onTalentoChanged,
-                  ),
-                ],
-              ),
-              _sottoSezione(
-                titolo: 'Capacità di Razza',
-                figli: [
-                  if (razzaSelezionata == null)
-                    const Text('Seleziona prima una razza in Pagina 1.')
-                  else
-                    DropdownConDettagli(
-                      label: 'Capacità di Razza',
-                      valoreSelezionato: capacitaRazzaSelezionata,
-                      opzioni: capacitaRazzaDisponibili,
-                      descrizioni: {
-                        for (final c in capacitaRazzaDisponibili)
-                          c: descrizionePlaceholder(c),
-                      },
-                      etichetteSecondarie: capacitaCosti,
-                      contenutoInfo: (opzioni) =>
-                          DettagliCapacita(capacita: capacitaDaNomi(opzioni)),
-                      onChanged: onCapacitaRazzaChanged,
-                    ),
-                ],
-              ),
-              _sottoSezione(
-                titolo: 'Capacità di Sistema',
-                figli: [
-                  if (sistemaSelezionato == null)
-                    const Text(
-                      'Seleziona prima un sistema di origine in Pagina 1.',
-                    )
-                  else
-                    DropdownConDettagli(
-                      label: 'Capacità di Sistema',
-                      valoreSelezionato: capacitaSistemaSelezionata,
-                      opzioni: capacitaSistemaDisponibili,
-                      descrizioni: {
-                        for (final c in capacitaSistemaDisponibili)
-                          c: descrizioneCapacita(c),
-                      },
-                      etichetteSecondarie: capacitaCosti,
-                      contenutoInfo: (opzioni) =>
-                          DettagliCapacita(capacita: capacitaDaNomi(opzioni)),
-                      onChanged: onCapacitaSistemaChanged,
-                    ),
-                ],
-              ),
-              _sottoSezione(
-                titolo: 'Capacità di Background',
-                figli: [
-                  if (backgroundSelezionato == null)
-                    const Text('Seleziona prima un background in Pagina 1.')
-                  else
-                    DropdownConDettagli(
-                      label: 'Capacità di Background',
-                      valoreSelezionato: capacitaBackgroundSelezionata,
-                      opzioni: capacitaBackgroundDisponibili,
-                      descrizioni: {
-                        for (final c in capacitaBackgroundDisponibili)
-                          c: descrizioneCapacita(c),
-                      },
-                      etichetteSecondarie: capacitaCosti,
-                      contenutoInfo: (opzioni) =>
-                          DettagliCapacita(capacita: capacitaDaNomi(opzioni)),
-                      onChanged: onCapacitaBackgroundChanged,
-                    ),
-                ],
-              ),
-              _sottoSezione(
-                titolo: 'Capacità Generiche',
-                figli: _buildCampiCapacitaGeneriche(),
-              ),
-            ],
-          ),
+          _buildSezioneTalentiCapacita(),
           const SizedBox(height: 24),
           _buildSezionePoteriPsionici(),
           const SizedBox(height: 24),
@@ -365,27 +259,125 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
     );
   }
 
-  /// Sezione annidata dentro "Talenti e Capacità": titolo più piccolo e
-  /// rientro per rendere visibile la gerarchia.
+  /// Talento e Capacità in un'unica sezione, un campo sotto l'altro e
+  /// senza titoli in mezzo: l'etichetta di ogni campo dice già cos'è.
   ///
-  /// A differenza delle sezioni principali NON è collassabile: a
-  /// collassare è già "Talenti e Capacità" che le contiene, e ognuna di
-  /// queste sottosezioni ha un solo campo dentro.
-  Widget _sottoSezione({required String titolo, required List<Widget> figli}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, top: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            titolo,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  /// Talento e Capacità di Razza, di Sistema e del Pianeta sono
+  /// obbligatori (lo controlla CharacterCreationPage). La Capacità di
+  /// Background è già presa, perché ogni background ne ha una sola, ma se
+  /// ne possono leggere le info. Le Generiche sono facoltative e sono le
+  /// sole che si pagano, quindi solo loro mostrano il costo.
+  Widget _buildSezioneTalentiCapacita() {
+    final capacitaBackground = capacitaDiBackground(backgroundSelezionato);
+
+    return SezioneCollassabile(
+      titolo: 'Talenti e Capacità',
+      figli: [
+        const SizedBox(height: 8),
+        _campo(
+          DropdownConDettagli(
+            label: 'Talento',
+            valoreSelezionato: talentoSelezionato,
+            opzioni: talentiOptions,
+            descrizioni: talentiDescrizioni,
+            contenutoInfo: (opzioni) =>
+                DettagliTalento(talenti: talentiDaNomi(opzioni)),
+            onChanged: onTalentoChanged,
           ),
-          const SizedBox(height: 8),
-          ...figli,
-        ],
+        ),
+        ..._buildCampiCapacitaRazza(),
+        _tendinaCapacita(
+          label: 'Capacità di Sistema',
+          valore: capacitaSistemaSelezionata,
+          opzioni: capacitaSistemaOptions[sistemaSelezionato] ?? const [],
+          onChanged: onCapacitaSistemaChanged,
+        ),
+        _tendinaCapacita(
+          label: 'Capacità del Pianeta',
+          valore: capacitaPianetaSelezionata,
+          opzioni: capacitaPianetaOptions(
+            sistemaSelezionato,
+            pianetaSelezionato,
+          ),
+          onChanged: onCapacitaPianetaChanged,
+        ),
+        if (capacitaBackground != null)
+          _campo(
+            CampoFissoConDettagli(
+              label: 'Capacità di Background',
+              valore: capacitaBackground,
+              contenutoInfo: (_) => DettagliCapacita(
+                capacita: capacitaDaNomi([capacitaBackground]),
+              ),
+            ),
+          ),
+        ..._buildCampiCapacitaGeneriche(),
+      ],
+    );
+  }
+
+  /// Distanzia un campo della sezione Talenti e Capacità da quelli vicini.
+  Widget _campo(Widget campo) =>
+      Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: campo);
+
+  /// Tendina di una Capacità, con il Pulsante Info che ne mostra la
+  /// scheda completa ([DettagliCapacita]).
+  ///
+  /// [costi] va passato solo per le Generiche, le sole che si pagano. Con
+  /// [onRimuovi] il campo ha la "X" per svuotarlo, e le info mostrano solo
+  /// la capacità scelta invece di tutte quelle disponibili.
+  Widget _tendinaCapacita({
+    required String label,
+    required String? valore,
+    required List<String> opzioni,
+    required ValueChanged<String?> onChanged,
+    Map<String, String>? costi,
+    VoidCallback? onRimuovi,
+  }) {
+    return _campo(
+      DropdownConDettagli(
+        label: label,
+        valoreSelezionato: valore,
+        opzioni: opzioni,
+        // Le info passano da contenutoInfo, che non le usa.
+        descrizioni: const {},
+        etichetteSecondarie: costi,
+        contenutoInfo: (opzioni) =>
+            DettagliCapacita(capacita: capacitaDaNomi(opzioni)),
+        onChanged: onChanged,
+        onRimuovi: onRimuovi,
+        infoSoloOpzioneSelezionata: onRimuovi != null,
       ),
     );
+  }
+
+  /// Le [opzioni] meno quelle già scelte negli altri campi di [scelte],
+  /// cioè in tutti tranne quello all'[indice]: così nessuna voce si
+  /// prende due volte.
+  List<String> _senzaScelteAltrove(
+    List<String> opzioni,
+    List<String?> scelte,
+    int indice,
+  ) {
+    final altrove = scelte
+        .whereIndexed((i, v) => i != indice && v != null)
+        .toSet();
+    return opzioni.where((o) => !altrove.contains(o)).toList();
+  }
+
+  /// I campi "Capacità di Razza N": ognuno offre le capacità della razza
+  /// non già scelte negli altri.
+  List<Widget> _buildCampiCapacitaRazza() {
+    final offerte = capacitaRazzaOptions[razzaSelezionata] ?? const <String>[];
+    return [
+      for (var i = 0; i < capacitaRazzaSelezionate.length; i++)
+        _tendinaCapacita(
+          label: 'Capacità di Razza ${i + 1}',
+          valore: capacitaRazzaSelezionate[i],
+          opzioni: _senzaScelteAltrove(offerte, capacitaRazzaSelezionate, i),
+          onChanged: (valore) => onCapacitaRazzaChanged(i, valore),
+        ),
+    ];
   }
 
   /// Riga con nome (+ eventuale sottotitolo), Pulsante Info, bottone "-",
@@ -471,38 +463,21 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
   /// ne viene aggiunto uno nuovo. Il bottone "X" permette di rimuovere
   /// la selezione corrente.
   List<Widget> _buildCampiCapacitaGeneriche() {
-    return List.generate(capacitaGenericheSelezionate.length, (indice) {
-      final valoreCorrente = capacitaGenericheSelezionate[indice];
-
-      // Valori scelti negli ALTRI campi (non in questo), da escludere
-      // dalle opzioni di questo dropdown.
-      final scelteAltrove = capacitaGenericheSelezionate
-          .whereIndexed((i, v) => i != indice && v != null)
-          .cast<String>()
-          .toSet();
-
-      final opzioniDisponibili = capacitaGenericheOptions
-          .where((o) => !scelteAltrove.contains(o))
-          .toList();
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: DropdownConDettagli(
-          label: 'Capacità Generica ${indice + 1}',
-          valoreSelezionato: valoreCorrente,
-          opzioni: opzioniDisponibili,
-          descrizioni: {
-            for (final c in opzioniDisponibili) c: descrizioneCapacita(c),
-          },
-          etichetteSecondarie: capacitaCosti,
-          contenutoInfo: (opzioni) =>
-              DettagliCapacita(capacita: capacitaDaNomi(opzioni)),
-          onChanged: (valore) => onCapacitaGenericaChanged(indice, valore),
-          onRimuovi: () => onCapacitaGenericaRimossa(indice),
-          infoSoloOpzioneSelezionata: true,
+    return [
+      for (var i = 0; i < capacitaGenericheSelezionate.length; i++)
+        _tendinaCapacita(
+          label: 'Capacità Generica ${i + 1}',
+          valore: capacitaGenericheSelezionate[i],
+          opzioni: _senzaScelteAltrove(
+            capacitaGenericheOptions,
+            capacitaGenericheSelezionate,
+            i,
+          ),
+          costi: capacitaCosti,
+          onChanged: (valore) => onCapacitaGenericaChanged(i, valore),
+          onRimuovi: () => onCapacitaGenericaRimossa(i),
         ),
-      );
-    });
+    ];
   }
 
   /// Sezione dei Poteri Psionici.
@@ -542,15 +517,11 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
   List<Widget> _buildCampiPoteriPsionici() {
     return List.generate(poteriPsioniciSelezionati.length, (indice) {
       final valoreCorrente = poteriPsioniciSelezionati[indice];
-
-      final scelteAltrove = poteriPsioniciSelezionati
-          .whereIndexed((i, v) => i != indice && v != null)
-          .cast<String>()
-          .toSet();
-
-      final opzioniDisponibili = poteriPsioniciOptions
-          .where((o) => !scelteAltrove.contains(o))
-          .toList();
+      final opzioniDisponibili = _senzaScelteAltrove(
+        poteriPsioniciOptions,
+        poteriPsioniciSelezionati,
+        indice,
+      );
 
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -574,7 +545,7 @@ class Pagina2GestioneEsperienza extends StatelessWidget {
 }
 
 /// Piccola estensione di utilità per iterare con indice e filtro (segue)
-/// insieme, usata in [Pagina2GestioneEsperienza._buildCampiCapacitaGeneriche].
+/// insieme, usata in [Pagina2GestioneEsperienza._senzaScelteAltrove].
 extension _WhereIndexed<T> on List<T> {
   Iterable<T> whereIndexed(bool Function(int index, T value) test) sync* {
     for (var i = 0; i < length; i++) {

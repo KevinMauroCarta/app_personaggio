@@ -1,0 +1,9 @@
+# Impostazioni di json_serializable, valide per tutti i modelli.
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # I modelli dentro altri modelli (es. la Razza nel Personaggio)
+          # vengono scritti come oggetti JSON, non lasciati a jsonEncode.
+          explicit_to_json: true

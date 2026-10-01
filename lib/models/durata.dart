@@ -1,3 +1,7 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'durata.g.dart';
+
 /// Unità di misura di una [Durata].
 enum UnitaDurata { round, minuti, ore }
 
@@ -11,6 +15,7 @@ enum UnitaDurata { round, minuti, ore }
 ///
 /// È un modello a sé e non una stringa libera perché la quantità serve
 /// come numero (per contare i round che passano), e non solo da leggere.
+@JsonSerializable(constructor: '_')
 class Durata {
   /// null quando la durata è istantanea.
   final int? quantita;
@@ -44,14 +49,10 @@ class Durata {
     }
   }
 
-  factory Durata.fromJson(Map<String, dynamic> json) {
-    final unita = json['unita'] as String?;
-    if (unita == null) return const Durata.istantanea();
-    return Durata._(
-      quantita: json['quantita'] as int?,
-      unita: UnitaDurata.values.byName(unita),
-    );
-  }
+  /// Senza unità la durata è istantanea, qualunque quantità ci sia.
+  factory Durata.fromJson(Map<String, dynamic> json) => json['unita'] == null
+      ? const Durata.istantanea()
+      : _$DurataFromJson(json);
 
-  Map<String, dynamic> toJson() => {'quantita': quantita, 'unita': unita?.name};
+  Map<String, dynamic> toJson() => _$DurataToJson(this);
 }

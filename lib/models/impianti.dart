@@ -1,7 +1,11 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/tipo_protesi.dart';
 import 'capacita.dart';
 import 'chip_neurale.dart';
 import 'protesi.dart';
+
+part 'impianti.g.dart';
 
 /// Modello/Impianti
 ///
@@ -21,6 +25,7 @@ import 'protesi.dart';
 /// Impianto valgono solo per gli impianti di questo elenco. Un impianto
 /// posseduto ma non installato sta fra gli Oggetti
 /// (Modello/Equipaggiamento.oggetti), come un'arma di scorta nello zaino.
+@JsonSerializable()
 class Impianti {
   final List<ChipNeurale> chipNeurali;
   final List<Protesi> protesi;
@@ -61,19 +66,8 @@ class Impianti {
   List<Protesi> get esoscheletri =>
       protesi.where((p) => p.tipo == TipoProtesi.esoscheletro).toList();
 
-  factory Impianti.fromJson(Map<String, dynamic> json) {
-    return Impianti(
-      chipNeurali: (json['chipNeurali'] as List<dynamic>? ?? [])
-          .map((e) => ChipNeurale.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      protesi: (json['protesi'] as List<dynamic>? ?? [])
-          .map((e) => Protesi.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-  }
+  factory Impianti.fromJson(Map<String, dynamic> json) =>
+      _$ImpiantiFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'chipNeurali': chipNeurali.map((c) => c.toJson()).toList(),
-    'protesi': protesi.map((p) => p.toJson()).toList(),
-  };
+  Map<String, dynamic> toJson() => _$ImpiantiToJson(this);
 }

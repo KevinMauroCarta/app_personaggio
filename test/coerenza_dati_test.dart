@@ -12,9 +12,14 @@ import 'package:app_personaggio/data/lista_tag.dart';
 import 'package:app_personaggio/data/lista_background.dart';
 import 'package:app_personaggio/data/lista_capacita.dart';
 import 'package:app_personaggio/data/lista_caratteristiche.dart';
+import 'package:app_personaggio/data/lista_pianeti.dart';
 import 'package:app_personaggio/data/lista_razze.dart';
+import 'package:app_personaggio/data/lista_sistemi.dart';
 import 'package:app_personaggio/data/lista_talenti.dart';
 import 'package:app_personaggio/enums/tipo_capacita.dart';
+import 'package:app_personaggio/enums/tipologia_pianeta.dart';
+import 'package:app_personaggio/screens/creazione_pg/creazione_pg_dati.dart'
+    show capacitaRazzaDaScegliere;
 
 void main() {
   final nomiCaratteristiche = listaCaratteristiche.map((c) => c.nome).toSet();
@@ -88,6 +93,98 @@ void main() {
     }
   });
 
+  // Le Capacità di Razza, di Sistema e del Pianeta sono obbligatorie in
+  // Creazione: se un dato non ne offrisse abbastanza, il campo resterebbe
+  // vuoto per sempre e il personaggio non si potrebbe mai salvare.
+
+  test('ogni razza offre abbastanza Capacità di Razza diverse', () {
+    for (final r in listaRazze) {
+      expect(
+        r.capacita.map((c) => c.nome).toSet().length,
+        greaterThanOrEqualTo(capacitaRazzaDaScegliere),
+        reason: r.nome,
+      );
+    }
+  });
+
+  test('ogni sistema e ogni suo pianeta offrono almeno una Capacità', () {
+    for (final s in listaSistemi) {
+      expect(s.capacitaDelSistema, isNotEmpty, reason: s.nome);
+      for (final p in s.pianeti) {
+        expect(
+          p.capacitaDelPianeta,
+          isNotEmpty,
+          reason: '${s.nome} / ${p.nome}',
+        );
+      }
+    }
+  });
+
+  // Le Capacità del Pianeta: ogni pianeta (lune comprese) ne offre tre,
+  // la prima legata alla sua tipologia e le altre due apprese lì.
+  final pianeti = [
+    for (final s in listaSistemi)
+      for (final p in s.pianeti) ...[p, ...p.lune],
+  ];
+
+  test('ogni pianeta offre la capacità della sua tipologia e due apprese', () {
+    for (final p in pianeti) {
+      final capacita = p.capacitaDelPianeta;
+      expect(capacita, hasLength(3), reason: p.nome);
+      expect(
+        capacita.first.nome,
+        capacitaDellaTipologia(p.tipologia).nome,
+        reason: p.nome,
+      );
+      expect(
+        capacita.map((c) => c.nome).toSet(),
+        hasLength(3),
+        reason: '${p.nome} offre due volte la stessa capacità',
+      );
+      for (final c in capacita) {
+        expect(c.tipo, TipoCapacita.pianeta, reason: '${p.nome} / ${c.nome}');
+      }
+    }
+  });
+
+  test('la capacità di una tipologia non si apprende su nessun pianeta', () {
+    final diTipologia = {
+      for (final t in TipologiaPianeta.values) capacitaDellaTipologia(t).nome,
+    };
+    // Una diversa per tipologia...
+    expect(diTipologia, hasLength(TipologiaPianeta.values.length));
+    // ...e mai fra le due apprese, che sarebbero un doppione.
+    for (final p in pianeti) {
+      for (final c in p.capacitaDelPianeta.skip(1)) {
+        expect(diTipologia, isNot(contains(c.nome)), reason: p.nome);
+      }
+    }
+  });
+
+  test('nessuna Capacità del Pianeta resta senza un pianeta che la offra', () {
+    final offerte = {
+      for (final p in pianeti)
+        for (final c in p.capacitaDelPianeta) c.nome,
+    };
+    final delPianeta = listaCapacita.where(
+      (c) => c.tipo == TipoCapacita.pianeta,
+    );
+    for (final c in delPianeta) {
+      expect(
+        offerte,
+        contains(c.nome),
+        reason: '"${c.nome}" non è offerta da nessun pianeta',
+      );
+    }
+  });
+
+  test('nessuna capacità ha lo stesso nome di un altra', () {
+    // Le capacità si ritrovano per nome (Creazione, Modifica, Aumento):
+    // due con lo stesso nome sarebbero indistinguibili.
+    final nomi = listaCapacita.map((c) => c.nome).toList();
+    expect(nomi.toSet(), hasLength(nomi.length));
+  });
+
   test('il tag di una razza è il nome della razza stessa', () {
     for (final r in listaRazze) {
       expect(r.tag, r.nome);
@@ -146,8 +243,8 @@ void main() {
       if (c.tipo == TipoCapacita.generica) {
         expect(c.costo, greaterThan(0), reason: c.nome);
       } else {
-        // Razza, Sistema e Background arrivano da scelte già fatte: non
-        // sono una spesa e devono costare 0.
+        // Razza, Sistema, Pianeta e Background arrivano da scelte già
+        // fatte: non sono una spesa e devono costare 0.
         expect(
           c.costo,
           0,

@@ -1,17 +1,27 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/grandezza_pianeta.dart';
 import '../enums/tipologia_pianeta.dart';
 import '../enums/densita_popolativa.dart';
 import 'capacita.dart';
 
+part 'pianeta.g.dart';
+
 /// Modello/Pianeta
+@JsonSerializable()
 class Pianeta {
   final String nome;
   final GrandezzaPianeta grandezza;
   final TipologiaPianeta tipologia;
+  @JsonKey(defaultValue: false)
   final bool luna;
   final List<Pianeta> lune;
   final String capitale;
   final DensitaPopolativa densitaPopolativa;
+
+  /// Le Capacità del Pianeta fra cui sceglie chi ci nasce: la prima è
+  /// quella della [tipologia], uguale per tutti i pianeti di quel tipo, le
+  /// altre due si apprendono su questo pianeta.
   final List<Capacita> capacitaDelPianeta;
   final List<String> tag;
 
@@ -27,35 +37,8 @@ class Pianeta {
     required this.tag,
   });
 
-  factory Pianeta.fromJson(Map<String, dynamic> json) {
-    return Pianeta(
-      nome: json['nome'] as String,
-      grandezza: GrandezzaPianeta.values.byName(json['grandezza'] as String),
-      tipologia: TipologiaPianeta.values.byName(json['tipologia'] as String),
-      luna: json['luna'] as bool? ?? false,
-      lune: (json['lune'] as List<dynamic>? ?? [])
-          .map((e) => Pianeta.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      capitale: json['capitale'] as String,
-      densitaPopolativa: DensitaPopolativa.values.byName(
-        json['densitaPopolativa'] as String,
-      ),
-      capacitaDelPianeta: (json['capacitaDelPianeta'] as List<dynamic>? ?? [])
-          .map((e) => Capacita.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      tag: (json['tag'] as List<dynamic>).cast<String>(),
-    );
-  }
+  factory Pianeta.fromJson(Map<String, dynamic> json) =>
+      _$PianetaFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'grandezza': grandezza.name,
-    'tipologia': tipologia.name,
-    'luna': luna,
-    'lune': lune.map((p) => p.toJson()).toList(),
-    'capitale': capitale,
-    'densitaPopolativa': densitaPopolativa.name,
-    'capacitaDelPianeta': capacitaDelPianeta.map((c) => c.toJson()).toList(),
-    'tag': tag,
-  };
+  Map<String, dynamic> toJson() => _$PianetaToJson(this);
 }

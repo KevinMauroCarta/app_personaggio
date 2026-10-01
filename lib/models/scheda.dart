@@ -1,3 +1,5 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'condizione.dart';
 import 'personaggio.dart';
 import 'ferite.dart';
@@ -6,6 +8,8 @@ import 'armi/arma.dart';
 import 'equipaggiamento.dart';
 import 'impianti.dart';
 import '../enums/abilita_arma.dart';
+
+part 'scheda.g.dart';
 
 /// Modello/Scheda
 ///
@@ -20,6 +24,7 @@ import '../enums/abilita_arma.dart';
 /// davvero liberi/manuali (es. Ferite.attuali, Ferite.bonus,
 /// velocitaBonus). Le formule non ancora note (es. i bonus a Resilienza,
 /// Furtività Passiva) restano campi manuali in attesa del regolamento.
+@JsonSerializable()
 class Scheda {
   final Personaggio personaggio;
 
@@ -58,12 +63,15 @@ class Scheda {
 
   /// Le note che il giocatore si segna a mano durante il gioco, una per
   /// voce: sono testo libero, non hanno un catalogo dietro.
+  @JsonKey(fromJson: _noteDaJson)
   final List<String> note;
 
   const Scheda({
     required this.personaggio,
     this.keyword = const [],
-    this.iraAttuale = iraIniziale,
+    // Con il nome della classe davanti, perché il codice generato
+    // (scheda.g.dart) copia questo valore fuori dalla classe.
+    this.iraAttuale = Scheda.iraIniziale,
     this.velocitaBonus = 0,
     this.ferite = const Ferite(),
     this.equipaggiamento = const Equipaggiamento(),
@@ -222,51 +230,15 @@ class Scheda {
     );
   }
 
-  factory Scheda.fromJson(Map<String, dynamic> json) {
-    return Scheda(
-      personaggio: Personaggio.fromJson(
-        json['personaggio'] as Map<String, dynamic>,
-      ),
-      keyword: (json['keyword'] as List<dynamic>? ?? []).cast<String>(),
-      iraAttuale: json['iraAttuale'] as int? ?? iraIniziale,
-      velocitaBonus: json['velocitaBonus'] as int? ?? 0,
-      ferite: json['ferite'] == null
-          ? const Ferite()
-          : Ferite.fromJson(json['ferite'] as Map<String, dynamic>),
-      equipaggiamento: json['equipaggiamento'] == null
-          ? const Equipaggiamento()
-          : Equipaggiamento.fromJson(
-              json['equipaggiamento'] as Map<String, dynamic>,
-            ),
-      // Le schede salvate prima degli Impianti non li hanno: partono
-      // senza chip né protesi.
-      impianti: json['impianti'] == null
-          ? const Impianti()
-          : Impianti.fromJson(json['impianti'] as Map<String, dynamic>),
-      furtivitaPassiva: json['furtivitaPassiva'] as int? ?? 0,
-      shockAttuale: json['shockAttuale'] as int? ?? 0,
-      peGuadagnati: json['peGuadagnati'] as int? ?? 0,
-      // Le schede salvate prima che le note fossero un elenco hanno qui
-      // un testo unico: diventa la prima nota, invece di sparire.
-      note: switch (json['note']) {
-        final List<dynamic> elenco => elenco.cast<String>(),
-        final String testo when testo.trim().isNotEmpty => [testo],
-        _ => const <String>[],
-      },
-    );
-  }
+  factory Scheda.fromJson(Map<String, dynamic> json) => _$SchedaFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'personaggio': personaggio.toJson(),
-    'keyword': keyword,
-    'iraAttuale': iraAttuale,
-    'velocitaBonus': velocitaBonus,
-    'ferite': ferite.toJson(),
-    'equipaggiamento': equipaggiamento.toJson(),
-    'impianti': impianti.toJson(),
-    'furtivitaPassiva': furtivitaPassiva,
-    'shockAttuale': shockAttuale,
-    'peGuadagnati': peGuadagnati,
-    'note': note,
-  };
+  Map<String, dynamic> toJson() => _$SchedaToJson(this);
 }
+
+/// Le schede salvate prima che le note fossero un elenco hanno qui un
+/// testo unico: diventa la prima nota, invece di sparire.
+List<String> _noteDaJson(Object? json) => switch (json) {
+  final List<dynamic> elenco => elenco.cast<String>(),
+  final String testo when testo.trim().isNotEmpty => [testo],
+  _ => const <String>[],
+};

@@ -1,14 +1,24 @@
+import 'package:json_annotation/json_annotation.dart';
+
+import '../../enums/abilita_arma.dart';
+import '../../enums/rarita.dart';
+import '../../enums/tipo_danno.dart';
+import '../tratto.dart';
 import 'arma.dart';
+
+part 'arma_mischia.g.dart';
 
 /// Modello/Armi/ArmaMischia
 ///
 /// Un'arma che colpisce da vicino: alla base aggiunge solo la [gittata],
 /// cioè fin dove arriva il colpo (1 per le armi corte, 2 per quelle più
 /// lunghe).
+@JsonSerializable()
 class ArmaMischia extends Arma {
   /// Chiave con cui l'arma si riconosce nel JSON salvato.
   static const String tipo = 'mischia';
 
+  @JsonKey(readValue: _gittataDaJson)
   final int gittata;
 
   const ArmaMischia({
@@ -31,36 +41,18 @@ class ArmaMischia extends Arma {
   @override
   String get descrizioneTipo => 'Mischia';
 
-  factory ArmaMischia.fromJson(Map<String, dynamic> json) {
-    final comuni = CampiComuniArma.fromJson(json);
-    return ArmaMischia(
-      nome: comuni.nome,
-      abilitaAssociata: comuni.abilitaAssociata,
-      danno: comuni.danno,
-      tipoDanno: comuni.tipoDanno,
-      dadiExtra: comuni.dadiExtra,
-      valorePenetrazione: comuni.valorePenetrazione,
-      tratti: comuni.tratti,
-      tag: comuni.tag,
-      valore: comuni.valore,
-      rarita: comuni.rarita,
-      gittata: _gittataDaJson(json),
-    );
-  }
-
-  /// La gittata salvata. Le armi scritte prima della divisione in due
-  /// tipi avevano un oggetto Gittata con dentro la portata in mischia.
-  static int _gittataDaJson(Map<String, dynamic> json) {
-    final gittata = json['gittata'];
-    if (gittata is int) return gittata;
-    if (gittata is Map<String, dynamic>) return gittata['mischia'] as int? ?? 1;
-    return 1;
-  }
+  factory ArmaMischia.fromJson(Map<String, dynamic> json) =>
+      _$ArmaMischiaFromJson(json);
 
   @override
-  Map<String, dynamic> toJson() => {
-    ...campiComuniJson(),
-    'tipo': tipo,
-    'gittata': gittata,
-  };
+  Map<String, dynamic> toJson() => {..._$ArmaMischiaToJson(this), 'tipo': tipo};
 }
+
+/// La gittata salvata. Le armi scritte prima della divisione in due tipi
+/// avevano un oggetto Gittata con dentro la portata in mischia.
+Object? _gittataDaJson(Map<dynamic, dynamic> json, String chiave) =>
+    switch (json[chiave]) {
+      final int gittata => gittata,
+      final Map<dynamic, dynamic> vecchia => vecchia['mischia'] ?? 1,
+      _ => 1,
+    };

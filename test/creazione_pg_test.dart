@@ -1,6 +1,7 @@
-// APP/Pagina/Creazione-PG: i due controlli che impediscono di creare un
-// personaggio non valido (campi obbligatori di Pagina 1 e PE negativi) e
-// il legame fra Capacità Generiche e Poteri Psionici.
+// APP/Pagina/Creazione-PG: i controlli che impediscono di creare un
+// personaggio non valido (campi obbligatori di Pagina 1 e 2, PE negativi),
+// la sezione Talenti e Capacità di Pagina 2 e il legame fra Capacità
+// Generiche e Poteri Psionici.
 //
 // Il Tag Psionico arriva quasi sempre da una Capacità Generica: se la si
 // toglie, i poteri già scelti non spettano più al personaggio e i PE
@@ -9,11 +10,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:app_personaggio/data/lista_background.dart';
 import 'package:app_personaggio/data/lista_poteri_psionici.dart';
+import 'package:app_personaggio/data/lista_razze.dart';
 import 'package:app_personaggio/data/lista_sistemi.dart';
+import 'package:app_personaggio/data/lista_talenti.dart';
+import 'package:app_personaggio/enums/tipo_capacita.dart';
+import 'package:app_personaggio/models/personaggio.dart';
+import 'package:app_personaggio/models/sistema.dart';
 import 'package:app_personaggio/screens/creazione_pg/creazione_pg_dati.dart'
     show abilitaFuoriRegola;
 import 'package:app_personaggio/screens/creazione_pg/creazione_pg_page.dart';
+import 'package:app_personaggio/screens/creazione_pg/creazione_pg_widgets.dart'
+    show CampoFissoConDettagli;
+
+/// Razza e background che [_compilaPagina1] sceglie.
+final _razza = listaRazze.firstWhere((r) => r.nome == 'Solari');
+final _background = listaBackground.firstWhere(
+  (b) => b.nome == 'Nato tra le Stelle',
+);
 
 /// Apre la tendina intestata [etichetta] e ne sceglie la voce [valore].
 Future<void> _scegli(
@@ -35,29 +50,66 @@ Future<void> _scegli(
   await tester.pumpAndSettle();
 }
 
+/// Le voci offerte dalla tendina intestata [etichetta].
+List<String?> _vociTendina(WidgetTester tester, String etichetta) {
+  final campo = find
+      .ancestor(
+        of: find.text(etichetta),
+        matching: find.byType(DropdownButtonFormField<String>),
+      )
+      .first;
+  final tendina = tester.widget<DropdownButton<String>>(
+    find.descendant(of: campo, matching: find.byType(DropdownButton<String>)),
+  );
+  return tendina.items!.map((voce) => voce.value).toList();
+}
+
 /// Compila tutti i campi obbligatori di Pagina 1 e passa a Pagina 2.
-Future<void> _compilaPagina1(WidgetTester tester) async {
+///
+/// Senza [sistema] sceglie il primo sistema del catalogo; il pianeta è
+/// sempre il primo del sistema.
+Future<void> _compilaPagina1(WidgetTester tester, {Sistema? sistema}) async {
+  final sistemaScelto = sistema ?? listaSistemi.first;
+  final pianetaScelto = sistemaScelto.pianeti.first;
+
   await tester.enterText(find.byType(TextField).first, 'Kaleb');
   await tester.pumpAndSettle();
 
-  await _scegli(tester, 'Razza', 'Solari');
+  await _scegli(tester, 'Razza', _razza.nome);
   await tester.enterText(find.byType(TextField).last, '30');
   await tester.pumpAndSettle();
   await _scegli(tester, 'Genere', 'Maschio');
-  await _scegli(tester, 'Background', 'Nato tra le Stelle');
-  await _scegli(tester, 'Sistema di origine', 'Sistema Solare');
+  await _scegli(tester, 'Background', _background.nome);
+  await _scegli(tester, 'Sistema di origine', sistemaScelto.nome);
   await tester.pumpAndSettle();
 
   // Il pianeta compare solo dopo il sistema, ed è uno di quelli di quel
-  // sistema: si prende il primo dal catalogo.
-  await _scegli(
-    tester,
-    'Pianeta di origine',
-    listaSistemi.first.pianeti.first.nome,
-  );
+  // sistema.
+  await _scegli(tester, 'Pianeta di origine', pianetaScelto.nome);
 
   await tester.tap(find.text('Avanti'));
   await tester.pumpAndSettle();
+}
+
+/// Compila i campi obbligatori di Pagina 2 - Talento e Capacità di
+/// Razza, di Sistema e del Pianeta - per un personaggio passato da
+/// [_compilaPagina1] senza argomenti.
+Future<void> _compilaObbligatoriPagina2(WidgetTester tester) async {
+  final sistema = listaSistemi.first;
+
+  await _scegli(tester, 'Talento', listaTalenti.first.nome);
+  await _scegli(tester, 'Capacità di Razza 1', _razza.capacita[0].nome);
+  await _scegli(tester, 'Capacità di Razza 2', _razza.capacita[1].nome);
+  await _scegli(
+    tester,
+    'Capacità di Sistema',
+    sistema.capacitaDelSistema.first.nome,
+  );
+  await _scegli(
+    tester,
+    'Capacità del Pianeta',
+    sistema.pianeti.first.capacitaDelPianeta.first.nome,
+  );
 }
 
 /// I PE letti dalla barra in fondo a Pagina 2.
@@ -150,6 +202,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
     await _compilaPagina1(tester);
+    await _compilaObbligatoriPagina2(tester);
 
     // Atletica a 2 con una sola abilità appresa è fuori regola: la
     // riga diventa rossa, ma finora si poteva salvare lo stesso.
@@ -207,4 +260,181 @@ void main() {
       );
     },
   );
+
+  testWidgets('Talento e Capacità stanno in una sezione sola, senza titoli', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
+    await _compilaPagina1(tester);
+
+    expect(find.text('Talenti e Capacità'), findsOneWidget);
+    // Ogni nome compare una volta sola: è l'etichetta del campo, senza
+    // più un titolo uguale sopra.
+    for (final campo in [
+      'Talento',
+      'Capacità di Razza 1',
+      'Capacità di Razza 2',
+      'Capacità di Sistema',
+      'Capacità del Pianeta',
+      'Capacità di Background',
+      'Capacità Generica 1',
+    ]) {
+      expect(find.text(campo), findsOneWidget, reason: campo);
+    }
+  });
+
+  testWidgets('senza Talento e Capacità obbligatorie non si va al Riepilogo', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
+    await _compilaPagina1(tester);
+
+    await _tocca(tester, find.text('Riepilogo'));
+
+    // La Capacità di Background non manca mai: è già presa.
+    expect(
+      find.text(
+        'Compila prima: Talento, Capacità di Razza 1, Capacità di Razza 2, '
+        'Capacità di Sistema, Capacità del Pianeta',
+      ),
+      findsOneWidget,
+    );
+    // Si resta in Pagina 2: il bottone CREA sta nel Riepilogo.
+    expect(find.text('CREA'), findsNothing);
+  });
+
+  testWidgets('la Capacità di Background è già presa e ha le sue info', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
+    await _compilaPagina1(tester);
+
+    final capacita = _background.capacitaDiBackground;
+    final campo = find.byType(CampoFissoConDettagli);
+
+    // Compilata da sé, e non è una tendina: non c'è niente da scegliere.
+    expect(
+      find.descendant(of: campo, matching: find.text(capacita.nome)),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.text('Capacità di Background'),
+        matching: find.byType(DropdownButtonFormField<String>),
+      ),
+      findsNothing,
+    );
+
+    // Il Pulsante Info a fianco ne mostra la scheda.
+    await _tocca(
+      tester,
+      find.descendant(of: campo, matching: find.byIcon(Icons.info_outline)),
+    );
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(
+      find.text('Effetto: ${capacita.effetto}', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('le due Capacità di Razza non possono essere la stessa', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
+    await _compilaPagina1(tester);
+
+    final prima = _razza.capacita[0].nome;
+    final seconda = _razza.capacita[1].nome;
+    await _scegli(tester, 'Capacità di Razza 1', prima);
+
+    final vociSeconda = _vociTendina(tester, 'Capacità di Razza 2');
+    expect(vociSeconda, isNot(contains(prima)));
+    expect(vociSeconda, contains(seconda));
+  });
+
+  testWidgets('il personaggio creato ha tutte le capacità, senza pagarle', (
+    tester,
+  ) async {
+    Personaggio? creato;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              creato = await Navigator.of(context).push<Personaggio>(
+                MaterialPageRoute(
+                  builder: (_) => const CharacterCreationPage(),
+                ),
+              );
+            },
+            child: const Text('Apri'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Apri'));
+    await tester.pumpAndSettle();
+
+    await _compilaPagina1(tester);
+    final pePrima = _peDisponibili(tester);
+    await _compilaObbligatoriPagina2(tester);
+    expect(
+      _peDisponibili(tester),
+      pePrima,
+      reason: 'le capacità di razza, sistema e pianeta non si pagano',
+    );
+
+    await _tocca(tester, find.text('Riepilogo'));
+    expect(find.text('Talenti e Capacità'), findsOneWidget);
+    await _tocca(tester, find.text('CREA'));
+
+    final sistema = listaSistemi.first;
+    expect(creato, isNotNull, reason: 'il personaggio doveva essere creato');
+    expect(creato!.talenti.map((t) => t.nome), [listaTalenti.first.nome]);
+    // Nell'ordine dei campi: è quello su cui conta la Modifica.
+    expect(creato!.capacita.map((c) => c.nome), [
+      _razza.capacita[0].nome,
+      _razza.capacita[1].nome,
+      sistema.capacitaDelSistema.first.nome,
+      sistema.pianeti.first.capacitaDelPianeta.first.nome,
+      _background.capacitaDiBackground.nome,
+    ]);
+  });
+
+  testWidgets('una Generica presa come Capacità di Sistema non costa PE', (
+    tester,
+  ) async {
+    // Alcuni sistemi offrono Addestramento Psichico, che comprata come
+    // Generica costa: presa dal sistema no, arriva con la nascita.
+    final sistema = listaSistemi.firstWhere(
+      (s) => s.capacitaDelSistema.any((c) => c.tipo == TipoCapacita.generica),
+    );
+    final capacita = sistema.capacitaDelSistema.firstWhere(
+      (c) => c.tipo == TipoCapacita.generica,
+    );
+    expect(capacita.costo, greaterThan(0));
+
+    await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
+    await _compilaPagina1(tester, sistema: sistema);
+
+    final pePrima = _peDisponibili(tester);
+    await _scegli(tester, 'Capacità di Sistema', capacita.nome);
+
+    expect(_peDisponibili(tester), pePrima);
+  });
+
+  testWidgets('la Capacità del Pianeta si sceglie fra le tre del pianeta', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CharacterCreationPage()));
+    await _compilaPagina1(tester);
+
+    // Quella della tipologia e le due apprese sul pianeta, e nessuna di
+    // quelle del sistema.
+    final pianeta = listaSistemi.first.pianeti.first;
+    expect(
+      _vociTendina(tester, 'Capacità del Pianeta'),
+      pianeta.capacitaDelPianeta.map((c) => c.nome).toList(),
+    );
+  });
 }

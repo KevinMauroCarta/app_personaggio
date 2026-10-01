@@ -1,8 +1,13 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'caratteristica.dart';
+
+part 'caratteristica_personaggio.g.dart';
 
 /// Modello/CaratteristicaPersonaggio
 ///
 /// Valore Totale = Valore Base + Valore Bonus (vedi Utilizzo/Caratteristiche).
+@JsonSerializable()
 class CaratteristicaPersonaggio {
   final Caratteristica caratteristica;
   final int valoreBase;
@@ -16,19 +21,8 @@ class CaratteristicaPersonaggio {
 
   int get valoreTotale => valoreBase + valoreBonus;
 
-  factory CaratteristicaPersonaggio.fromJson(Map<String, dynamic> json) {
-    return CaratteristicaPersonaggio(
-      caratteristica: Caratteristica.fromJson(
-        json['caratteristica'] as Map<String, dynamic>,
-      ),
-      valoreBase: json['valoreBase'] as int,
-      valoreBonus: json['valoreBonus'] as int? ?? 0,
-    );
-  }
+  factory CaratteristicaPersonaggio.fromJson(Map<String, dynamic> json) =>
+      _$CaratteristicaPersonaggioFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'caratteristica': caratteristica.toJson(),
-    'valoreBase': valoreBase,
-    'valoreBonus': valoreBonus,
-  };
+  Map<String, dynamic> toJson() => _$CaratteristicaPersonaggioToJson(this);
 }

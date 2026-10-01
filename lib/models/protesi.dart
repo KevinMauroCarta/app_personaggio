@@ -1,8 +1,12 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../enums/parte_corpo.dart';
 import '../enums/rarita.dart';
 import '../enums/tipo_protesi.dart';
 import 'capacita.dart';
 import 'modificatore.dart';
+
+part 'protesi.g.dart';
 
 /// Modello/Protesi
 ///
@@ -19,11 +23,14 @@ import 'modificatore.dart';
 ///
 /// Come per Modello/ChipNeurale, i Modificatori entrano nel Valore Bonus
 /// del personaggio finché la protesi è montata.
+@JsonSerializable()
 class Protesi {
   final String nome;
   final TipoProtesi tipo;
   final ParteCorpo parte;
+  @JsonKey(defaultValue: '')
   final String descrizione;
+  @JsonKey(defaultValue: '')
   final String effetto;
   final Modificatore? modificatoreCaratteristica;
   final Modificatore? modificatoreAbilita;
@@ -32,8 +39,10 @@ class Protesi {
   final Capacita? capacita;
 
   /// Quanto costa procurarsela, sulla stessa scala di Modello/Armi/Arma.
+  @JsonKey(defaultValue: 0)
   final int valore;
 
+  @JsonKey(defaultValue: Rarita.comune)
   final Rarita rarita;
 
   const Protesi({
@@ -55,40 +64,8 @@ class Protesi {
     ?modificatoreAbilita,
   ];
 
-  factory Protesi.fromJson(Map<String, dynamic> json) {
-    return Protesi(
-      nome: json['nome'] as String,
-      tipo: TipoProtesi.values.byName(json['tipo'] as String),
-      parte: ParteCorpo.values.byName(json['parte'] as String),
-      descrizione: json['descrizione'] as String? ?? '',
-      effetto: json['effetto'] as String? ?? '',
-      modificatoreCaratteristica: _modificatore(
-        json['modificatoreCaratteristica'],
-      ),
-      modificatoreAbilita: _modificatore(json['modificatoreAbilita']),
-      capacita: json['capacita'] == null
-          ? null
-          : Capacita.fromJson(json['capacita'] as Map<String, dynamic>),
-      valore: json['valore'] as int? ?? 0,
-      rarita: json['rarita'] == null
-          ? Rarita.comune
-          : Rarita.values.byName(json['rarita'] as String),
-    );
-  }
+  factory Protesi.fromJson(Map<String, dynamic> json) =>
+      _$ProtesiFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'tipo': tipo.name,
-    'parte': parte.name,
-    'descrizione': descrizione,
-    'effetto': effetto,
-    'modificatoreCaratteristica': modificatoreCaratteristica?.toJson(),
-    'modificatoreAbilita': modificatoreAbilita?.toJson(),
-    'capacita': capacita?.toJson(),
-    'valore': valore,
-    'rarita': rarita.name,
-  };
+  Map<String, dynamic> toJson() => _$ProtesiToJson(this);
 }
-
-Modificatore? _modificatore(Object? json) =>
-    json == null ? null : Modificatore.fromJson(json as Map<String, dynamic>);

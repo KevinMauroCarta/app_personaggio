@@ -18,9 +18,12 @@ class Pagina3Riepilogo extends StatelessWidget {
   final Map<String, int> valoriCaratteristiche;
   final Map<String, int> valoriAbilita;
   final String? talentoSelezionato;
-  final String? capacitaRazzaSelezionata;
+  final List<String?> capacitaRazzaSelezionate;
   final String? capacitaSistemaSelezionata;
-  final String? capacitaBackgroundSelezionata;
+  final String? capacitaPianetaSelezionata;
+
+  /// Quella del background scelto: non si sceglie, arriva con lui.
+  final String? capacitaBackground;
   final List<String> capacitaGeneriche;
 
   /// Vuota se il personaggio non ha il Tag Psionico: in quel caso la
@@ -44,9 +47,10 @@ class Pagina3Riepilogo extends StatelessWidget {
     required this.valoriCaratteristiche,
     required this.valoriAbilita,
     required this.talentoSelezionato,
-    required this.capacitaRazzaSelezionata,
+    required this.capacitaRazzaSelezionate,
     required this.capacitaSistemaSelezionata,
-    required this.capacitaBackgroundSelezionata,
+    required this.capacitaPianetaSelezionata,
+    required this.capacitaBackground,
     required this.capacitaGeneriche,
     required this.poteriPsionici,
     required this.onIndietro,
@@ -94,43 +98,30 @@ class Pagina3Riepilogo extends StatelessWidget {
             sottotitolo: legendaAsteriscoAbilita,
           ),
           const SizedBox(height: 16),
-          _buildSezione('Talento', [
+          // Una sezione sola, come in Pagina 2: le etichette delle righe
+          // dicono già da dove arriva ogni capacità. I PE spesi sono
+          // quelli delle Generiche, le sole che si pagano.
+          _buildSezione('Talenti e Capacità', [
             _RigaRiepilogo('Talento', talentoSelezionato ?? '-'),
-          ]),
-          const SizedBox(height: 16),
-          _buildSezione('Capacità di Razza', [
-            _RigaRiepilogo(
-              'Capacità di Razza',
-              capacitaRazzaSelezionata ?? '-',
-            ),
-          ]),
-          const SizedBox(height: 16),
-          _buildSezione('Capacità di Sistema', [
+            for (final (i, nome) in capacitaRazzaSelezionate.indexed)
+              _RigaRiepilogo('Capacità di Razza ${i + 1}', nome ?? '-'),
             _RigaRiepilogo(
               'Capacità di Sistema',
               capacitaSistemaSelezionata ?? '-',
             ),
-          ]),
-          const SizedBox(height: 16),
-          _buildSezione('Capacità di Background', [
             _RigaRiepilogo(
-              'Capacità di Background',
-              capacitaBackgroundSelezionata ?? '-',
+              'Capacità del Pianeta',
+              capacitaPianetaSelezionata ?? '-',
             ),
-          ]),
-          const SizedBox(height: 16),
-          _buildSezione(
-            'Capacità Generiche',
-            capacitaGeneriche.isEmpty
-                ? [_RigaRiepilogo('Capacità Generiche', '-')]
-                : capacitaGeneriche
-                      .map(
-                        (nome) =>
-                            _RigaRiepilogo(nome, '${costoCapacita(nome)} PE'),
-                      )
-                      .toList(),
-            pxSpesi: pxSpesiCapacitaGeneriche(capacitaGeneriche),
-          ),
+            _RigaRiepilogo('Capacità di Background', capacitaBackground ?? '-'),
+            if (capacitaGeneriche.isEmpty)
+              const _RigaRiepilogo('Capacità Generiche', '-'),
+            for (final (i, nome) in capacitaGeneriche.indexed)
+              _RigaRiepilogo(
+                'Capacità Generica ${i + 1}',
+                '$nome (${costoCapacita(nome)} PE)',
+              ),
+          ], pxSpesi: pxSpesiCapacitaGeneriche(capacitaGeneriche)),
           if (poteriPsionici.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildSezione(

@@ -1,3 +1,7 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'condizione.g.dart';
+
 /// Modello/Condizione
 ///
 /// Uno stato in cui il personaggio si trova e che gli dà un malus o un
@@ -10,6 +14,7 @@
 /// il personaggio (Scheda.condizioni). È la stessa scelta fatta per il
 /// Valore Bonus dei Modificatori: un dato calcolato non può restare
 /// indietro rispetto a ciò che lo genera.
+@JsonSerializable()
 class Condizione {
   final String nome;
   final int? valore;
@@ -24,17 +29,8 @@ class Condizione {
   /// condizione non ha un'intensità.
   String get etichetta => valore == null ? nome : '$nome $valore';
 
-  factory Condizione.fromJson(Map<String, dynamic> json) {
-    return Condizione(
-      nome: json['nome'] as String,
-      valore: json['valore'] as int?,
-      effetto: json['effetto'] as String? ?? '',
-    );
-  }
+  factory Condizione.fromJson(Map<String, dynamic> json) =>
+      _$CondizioneFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'nome': nome,
-    'valore': valore,
-    'effetto': effetto,
-  };
+  Map<String, dynamic> toJson() => _$CondizioneToJson(this);
 }
