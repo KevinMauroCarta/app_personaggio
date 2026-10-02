@@ -32,11 +32,19 @@ class Protesi {
   final String descrizione;
   @JsonKey(defaultValue: '')
   final String effetto;
-  final Modificatore? modificatoreCaratteristica;
-  final Modificatore? modificatoreAbilita;
+
+  /// I Modificatori che porta: su Caratteristiche, Abilità o valori della
+  /// Scheda (Modello/Modificatore).
+  @JsonKey(readValue: leggiModificatori)
+  final List<Modificatore> modificatori;
 
   /// La Capacità da Impianto che la protesi dà finché è montata.
   final Capacita? capacita;
+
+  /// Quanto pesa sul corpo: la somma dei Carichi delle protesi installate
+  /// non può superare la Resistenza del personaggio (vedi Modello/Scheda).
+  @JsonKey(defaultValue: 1)
+  final int carico;
 
   /// Quanto costa procurarsela, sulla stessa scala di Modello/Armi/Arma.
   @JsonKey(defaultValue: 0)
@@ -51,18 +59,12 @@ class Protesi {
     required this.parte,
     required this.descrizione,
     required this.effetto,
-    this.modificatoreCaratteristica,
-    this.modificatoreAbilita,
+    this.modificatori = const [],
     this.capacita,
+    required this.carico,
     required this.valore,
     required this.rarita,
   });
-
-  /// I Modificatori presenti, senza i null.
-  List<Modificatore> get modificatori => [
-    ?modificatoreCaratteristica,
-    ?modificatoreAbilita,
-  ];
 
   factory Protesi.fromJson(Map<String, dynamic> json) =>
       _$ProtesiFromJson(json);

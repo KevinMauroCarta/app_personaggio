@@ -1,5 +1,6 @@
 import '../enums/tipo_capacita.dart';
 import '../models/capacita.dart';
+import '../enums/bersaglio.dart';
 import '../models/modificatore.dart';
 
 /// Lista/Capacità + Regolamento/Capacità
@@ -32,7 +33,7 @@ final List<Capacita> listaCapacita = [
         'avere: sollevi ciò che non dovresti e sfondi ciò che dovrebbe '
         'reggere.',
     effetto: 'Forza +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.forza, valore: 1)],
     costo: 2,
     tag: const ['Brutale'],
   ),
@@ -43,11 +44,10 @@ final List<Capacita> listaCapacita = [
         'Distingui un movimento sospetto in fondo a un corridoio buio e '
         'leggi da lontano ciò che per gli altri è solo una macchia.',
     effetto: 'Intelletto +1, Percezione +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.percezione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Vigile'],
   ),
@@ -58,7 +58,7 @@ final List<Capacita> listaCapacita = [
         'Tieni la mente sgombra anche quando tutto intorno crolla: paura '
         'e rabbia restano fuori dalla porta finché non decidi tu.',
     effetto: 'Volontà +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.volonta, valore: 1)],
     costo: 0,
     tag: const ['Disciplinato'],
   ),
@@ -69,8 +69,10 @@ final List<Capacita> listaCapacita = [
         'Ti muovi e spari come chi lo ha fatto per mestiere: coperture, '
         'ricariche e linee di tiro ti vengono automatiche.',
     effetto: 'Agilità +1, Mira +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Mira', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.mira, valore: 1),
+    ],
     costo: 0,
     tag: const ['Militare'],
   ),
@@ -81,10 +83,9 @@ final List<Capacita> listaCapacita = [
         'Il tuo organismo incassa ciò che metterebbe a terra chiunque '
         'altro: veleni, freddo, fatica e colpi ti segnano meno.',
     effetto: 'Resistenza +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+    ],
     costo: 0,
     tag: const ['Resistente'],
   ),
@@ -95,11 +96,10 @@ final List<Capacita> listaCapacita = [
         'Davanti a una macchina sconosciuta capisci da dove si apre, cosa '
         'la alimenta e cosa succede se tocchi il cavo sbagliato.',
     effetto: 'Intelletto +1, Tecnologia +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Tecnologia', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tecnologia, valore: 1),
+    ],
     costo: 0,
     tag: const ['Tecnico'],
   ),
@@ -110,7 +110,7 @@ final List<Capacita> listaCapacita = [
         'Il tuo corpo si sposta prima che la mente abbia registrato il '
         'pericolo: ti ritrovi al riparo senza ricordare di esserti mosso.',
     effetto: 'Agilità +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.agilita, valore: 1)],
     costo: 2,
     tag: const ['Istintivo'],
   ),
@@ -121,11 +121,10 @@ final List<Capacita> listaCapacita = [
         'Quando parli la stanza si zittisce, e i tuoi ordini vengono '
         'eseguiti prima che a qualcuno venga in mente di discuterli.',
     effetto: 'Socialità +1, Comando +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Socialità',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Comando', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.socialita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.comando, valore: 1),
+    ],
     costo: 3,
     tag: const ['Dominante'],
   ),
@@ -136,8 +135,10 @@ final List<Capacita> listaCapacita = [
         'Non spari al bersaglio: spari al punto esatto del bersaglio che '
         'lo farà smettere di essere un problema.',
     effetto: 'Agilità +1, Mira +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Mira', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.mira, valore: 1),
+    ],
     costo: 0,
     tag: const ['Preciso'],
   ),
@@ -148,10 +149,9 @@ final List<Capacita> listaCapacita = [
         'Ti basta un\'occhiata a una mappa, a un volto o a una sequenza '
         'di numeri per riaverli davanti agli occhi giorni dopo.',
     effetto: 'Intelletto +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+    ],
     costo: 3,
     // Seconda via al tag Psionico, oltre ad "Addestramento Psichico":
     // essendo una Capacità Generica è alla portata di chiunque, senza
@@ -165,7 +165,7 @@ final List<Capacita> listaCapacita = [
         'Continui ad andare avanti quando chiunque altro si sarebbe già '
         'seduto ad aspettare la fine.',
     effetto: 'Volontà +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.volonta, valore: 1)],
     costo: 0,
     tag: const ['Tenace'],
   ),
@@ -176,11 +176,10 @@ final List<Capacita> listaCapacita = [
         'Capisci cosa vuole davvero chi ti sta di fronte, e glielo offri '
         'con le parole che si aspetta di sentire.',
     effetto: 'Socialità +1, Persuasione +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Socialità',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Persuasione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.socialita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.persuasione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Diplomatico'],
   ),
@@ -191,11 +190,10 @@ final List<Capacita> listaCapacita = [
         'Hai imparato a incanalare l\'energia mentale invece di subirla: '
         'la dirigi dove serve senza che ti si ritorca contro.',
     effetto: 'Volontà +1, Controllo Psionico +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(
-      nome: 'Controllo Psionico',
-      valore: 1,
-    ),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.controlloPsionico, valore: 1),
+    ],
     costo: 8,
     // È questo tag a sbloccare la scelta dei Poteri Psionici in
     // creazione (services/effetti_personaggio.dart, tagPsionico).
@@ -208,7 +206,7 @@ final List<Capacita> listaCapacita = [
         'Attraversi terreni impraticabili come se fossero una strada: '
         'salti, ti arrampichi e atterri senza perdere il ritmo.',
     effetto: 'Agilità +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.agilita, valore: 1)],
     costo: 2,
     tag: const ['Mobile'],
   ),
@@ -219,11 +217,10 @@ final List<Capacita> listaCapacita = [
         'Riconosci simboli, rovine e macchinari di civiltà scomparse, e '
         'sai a cosa serviva davvero l\'oggetto che hai in mano.',
     effetto: 'Intelletto +1, Tecnologia +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Tecnologia', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tecnologia, valore: 1),
+    ],
     costo: 0,
     tag: const ['Erudito'],
   ),
@@ -234,8 +231,10 @@ final List<Capacita> listaCapacita = [
         'Quando parte la carica smetti di calcolare: addosso, con tutto '
         'il peso, finché una delle due parti non resta a terra.',
     effetto: 'Forza +1, Mischia Pesante +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Mischia Pesante', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.forza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.mischiaPesante, valore: 1),
+    ],
     costo: 0,
     tag: const ['Feroce'],
   ),
@@ -246,11 +245,10 @@ final List<Capacita> listaCapacita = [
         'Vedi lo scontro dall\'alto mentre ci sei dentro: sai chi colpire '
         'per primo e da che parte arriverà il prossimo.',
     effetto: 'Intelletto +1, Mischia Leggera +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Mischia Leggera', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.mischiaLeggera, valore: 1),
+    ],
     costo: 0,
     tag: const ['Strategico'],
   ),
@@ -261,11 +259,10 @@ final List<Capacita> listaCapacita = [
         'Sai fermare un\'emorragia con quello che hai in tasca, e capire '
         'guardando un ferito quanto tempo gli resta.',
     effetto: 'Intelletto +1, Medicae +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Medicae', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.medicae, valore: 1),
+    ],
     costo: 0,
     tag: const ['Medico'],
   ),
@@ -276,11 +273,10 @@ final List<Capacita> listaCapacita = [
         'Senti l\'imboscata un attimo prima che scatti, e quell\'attimo '
         'è tuo: sei già in movimento quando gli altri capiscono.',
     effetto: 'Iniziativa +1, Mischia Leggera +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Iniziativa',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Mischia Leggera', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1),
+      Modificatore(bersaglio: Bersaglio.mischiaLeggera, valore: 1),
+    ],
     costo: 2,
     tag: const ['Vigile'],
   ),
@@ -291,8 +287,10 @@ final List<Capacita> listaCapacita = [
         'Senza un basso e un alto ti orienti meglio di chiunque altro: ti '
         'spingi da una parete all\'altra e arrivi dove volevi.',
     effetto: 'Agilità +1, Atletica +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.atletica, valore: 1),
+    ],
     costo: 0,
     tag: const ['Spaziale'],
   ),
@@ -303,11 +301,10 @@ final List<Capacita> listaCapacita = [
         'Hai vissuto dove niente è garantito: razioni corte, aria cattiva '
         'e notti al freddo non ti tolgono più lucidità.',
     effetto: 'Resistenza +1, Tempra +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tempra, valore: 1),
+    ],
     costo: 0,
     tag: const ['Duro'],
   ),
@@ -323,10 +320,9 @@ final List<Capacita> listaCapacita = [
         'La tua pelle trattiene la luce e la restituisce: al buio sei un '
         'punto di riferimento, in pieno sole sei difficile da guardare.',
     effetto: 'Socialità +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Socialità',
-      valore: 1,
-    ),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.socialita, valore: 1),
+    ],
     costo: 0,
     tag: const ['Luminoso'],
   ),
@@ -337,11 +333,10 @@ final List<Capacita> listaCapacita = [
         'Hai un rapporto con il peso e l\'equilibrio che gli altri non '
         'hanno: nessuna spinta e nessun terremoto ti stacca da dove stai.',
     effetto: 'Resistenza +1, Atletica +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.atletica, valore: 1),
+    ],
     costo: 0,
     tag: const ['Solido'],
   ),
@@ -352,11 +347,10 @@ final List<Capacita> listaCapacita = [
         'Trattieni il fiato per tempi che agli altri sembrano impossibili '
         'e sopporti la pressione senza che il corpo protesti.',
     effetto: 'Resistenza +1, Tempra +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tempra, valore: 1),
+    ],
     costo: 0,
     tag: const ['Profondo'],
   ),
@@ -367,10 +361,9 @@ final List<Capacita> listaCapacita = [
         'Porti con te ricordi che superano la durata di una vita umana, e '
         'riconosci schemi che si ripetono da generazioni.',
     effetto: 'Intelletto +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+    ],
     costo: 0,
     tag: const ['Antico'],
   ),
@@ -381,8 +374,10 @@ final List<Capacita> listaCapacita = [
         'Ti muovi senza spostare l\'aria: chi ti sta accanto si accorge di '
         'te solo quando decidi di farti notare.',
     effetto: 'Agilità +1, Furtività +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Furtività', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.furtivita, valore: 1),
+    ],
     costo: 0,
     tag: const ['Silenzioso'],
   ),
@@ -393,8 +388,10 @@ final List<Capacita> listaCapacita = [
         'Più la situazione degenera, più la tua voce resta ferma e le tue '
         'mani smettono di tremare.',
     effetto: 'Volontà +1, Tempra +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tempra, valore: 1),
+    ],
     costo: 0,
     tag: const ['Freddo'],
   ),
@@ -418,8 +415,10 @@ final List<Capacita> listaCapacita = [
         'muscoli abituati al peso: reggi fatiche e urti che piegherebbero '
         'chiunque altro.',
     effetto: 'Forza +1, Tempra +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.forza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tempra, valore: 1),
+    ],
     costo: 0,
     tag: const ['Solido'],
   ),
@@ -431,8 +430,10 @@ final List<Capacita> listaCapacita = [
         'sospese e navette sempre in volo: senti il vento cambiare prima '
         'che cambi, e ci guidi dentro.',
     effetto: 'Agilità +1, Pilotaggio +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Pilotaggio', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.pilotaggio, valore: 1),
+    ],
     costo: 0,
     tag: const ['Mobile'],
   ),
@@ -444,11 +445,10 @@ final List<Capacita> listaCapacita = [
         'camminare: correnti, onde e freddo degli abissi non ti fanno più '
         'paura.',
     effetto: 'Resistenza +1, Atletica +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.atletica, valore: 1),
+    ],
     costo: 0,
     tag: const ['Fluido'],
   ),
@@ -462,11 +462,10 @@ final List<Capacita> listaCapacita = [
         'razionare il calore e restare lucido anche quando le dita non '
         'rispondono più.',
     effetto: 'Resistenza +1, Sopravvivenza +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Sopravvivenza', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.sopravvivenza, valore: 1),
+    ],
     costo: 0,
     tag: const ['Freddo'],
   ),
@@ -478,8 +477,10 @@ final List<Capacita> listaCapacita = [
         'roccia cede, dove nasconde il metallo e come far ripartire una '
         'macchina inceppata.',
     effetto: 'Forza +1, Tecnologia +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Tecnologia', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.forza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tecnologia, valore: 1),
+    ],
     costo: 0,
     tag: const ['Minerario'],
   ),
@@ -491,11 +492,10 @@ final List<Capacita> listaCapacita = [
         'tuoi polmoni ne ricavano il necessario e il tuo corpo ha smesso '
         'di lamentarsi.',
     effetto: 'Resistenza +1, Tempra +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Resistenza',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Tempra', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.resistenza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tempra, valore: 1),
+    ],
     costo: 0,
     tag: const ['Resistente'],
   ),
@@ -507,8 +507,10 @@ final List<Capacita> listaCapacita = [
         'giuste, a trovare l\'acqua dove non sembra esserci e a non cedere '
         'alla sete.',
     effetto: 'Volontà +1, Sopravvivenza +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Sopravvivenza', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.sopravvivenza, valore: 1),
+    ],
     costo: 0,
     tag: const ['Ardente'],
   ),
@@ -519,11 +521,10 @@ final List<Capacita> listaCapacita = [
         'Sei cresciuto fra cento lingue e mille usanze: capisci al volo '
         'chi hai davanti e trovi sempre un modo per farti capire.',
     effetto: 'Socialità +1, Intuizione +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Socialità',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Intuizione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.socialita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.intuizione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Diversificato'],
   ),
@@ -534,11 +535,10 @@ final List<Capacita> listaCapacita = [
         'Vieni da un mondo ancora da costruire: dove manca qualcosa ti '
         'rimbocchi le maniche e lo fai, prima che qualcuno te lo chieda.',
     effetto: 'Iniziativa +1, Atletica +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Iniziativa',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1),
+      Modificatore(bersaglio: Bersaglio.atletica, valore: 1),
+    ],
     costo: 0,
     tag: const ['Coloniale'],
   ),
@@ -549,8 +549,10 @@ final List<Capacita> listaCapacita = [
         'Hai visto tempeste grandi come continenti e hai imparato a '
         'passarci attraverso: quando tutto si agita, tu tieni la rotta.',
     effetto: 'Volontà +1, Pilotaggio +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Pilotaggio', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.pilotaggio, valore: 1),
+    ],
     costo: 0,
     tag: const ['Tempestoso'],
   ),
@@ -561,11 +563,10 @@ final List<Capacita> listaCapacita = [
         'Sei cresciuto fra ricevimenti, inchini e alleanze sussurrate: sai '
         'cosa dire, a chi dirlo e soprattutto cosa tacere.',
     effetto: 'Socialità +1, Astuzia +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Socialità',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Astuzia', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.socialita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.astuzia, valore: 1),
+    ],
     costo: 0,
     tag: const ['Elegante'],
   ),
@@ -577,11 +578,10 @@ final List<Capacita> listaCapacita = [
         'ascolti tutto e senti arrivare gli altri molto prima che loro '
         'sentano te.',
     effetto: 'Iniziativa +1, Furtività +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Iniziativa',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Furtività', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1),
+      Modificatore(bersaglio: Bersaglio.furtivita, valore: 1),
+    ],
     costo: 0,
     tag: const ['Silenzioso'],
   ),
@@ -592,11 +592,10 @@ final List<Capacita> listaCapacita = [
         'Dove sei nato ogni parola ha un prezzo: sai tenere un segreto, '
         'riconoscere una menzogna e raccontarne una quando serve.',
     effetto: 'Intelletto +1, Inganno +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Inganno', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.inganno, valore: 1),
+    ],
     costo: 0,
     tag: const ['Segreto'],
   ),
@@ -607,11 +606,10 @@ final List<Capacita> listaCapacita = [
         'Sul tuo pianeta anche i giochi dei bambini sono manovre: leggi un '
         'campo di battaglia al primo sguardo e sai dove mettere ognuno.',
     effetto: 'Intelletto +1, Comando +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Comando', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.comando, valore: 1),
+    ],
     costo: 0,
     tag: const ['Tattico'],
   ),
@@ -622,8 +620,10 @@ final List<Capacita> listaCapacita = [
         'Sei cresciuto fra orari, gerarchie e regolamenti scritti: studi '
         'con metodo e non molli un lavoro finché non è fatto come si deve.',
     effetto: 'Volontà +1, Istruzione +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Istruzione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.istruzione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Rigoroso'],
   ),
@@ -635,8 +635,10 @@ final List<Capacita> listaCapacita = [
         'e attento: nel buio e nel silenzio cogli quello che agli altri '
         'sfugge.',
     effetto: 'Volontà +1, Percezione +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.percezione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Profondo'],
   ),
@@ -647,11 +649,10 @@ final List<Capacita> listaCapacita = [
         'Sul tuo mondo si ragiona prima di agire: scomponi ogni problema in '
         'pezzi, trovi quello che non torna e lo segui fino in fondo.',
     effetto: 'Intelletto +1, Investigazione +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Investigazione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.investigazione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Analitico'],
   ),
@@ -663,8 +664,10 @@ final List<Capacita> listaCapacita = [
         'sole il cavo giusto e rimettono in funzione ciò che altri '
         'butterebbero.',
     effetto: 'Agilità +1, Tecnologia +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Tecnologia', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.tecnologia, valore: 1),
+    ],
     costo: 0,
     tag: const ['Tecnico'],
   ),
@@ -675,11 +678,10 @@ final List<Capacita> listaCapacita = [
         'Dove sei cresciuto vince chi colpisce per primo: reagisci prima di '
         'pensare, e la tua lama arriva sempre un attimo prima dell\'altra.',
     effetto: 'Iniziativa +1, Mischia Leggera +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Iniziativa',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Mischia Leggera', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1),
+      Modificatore(bersaglio: Bersaglio.mischiaLeggera, valore: 1),
+    ],
     costo: 0,
     tag: const ['Rapido'],
   ),
@@ -690,8 +692,10 @@ final List<Capacita> listaCapacita = [
         'Il tuo mondo cambia di continuo e tu con lui: ti adatti a persone, '
         'luoghi e situazioni nuove come se ci fossi sempre stato.',
     effetto: 'Agilità +1, Intuizione +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Intuizione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.intuizione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Adattivo'],
   ),
@@ -702,8 +706,10 @@ final List<Capacita> listaCapacita = [
         'Il tuo popolo non si inchina a nessuno: il portamento che hai '
         'ereditato basta a far abbassare lo sguardo a chi ti sta di fronte.',
     effetto: 'Forza +1, Intimidazione +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Intimidazione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.forza, valore: 1),
+      Modificatore(bersaglio: Bersaglio.intimidazione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Fiero'],
   ),
@@ -715,8 +721,10 @@ final List<Capacita> listaCapacita = [
         'senti le intenzioni degli altri e l\'eco dei luoghi prima ancora '
         'di vederli.',
     effetto: 'Volontà +1, Intuizione +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Volontà', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Intuizione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.volonta, valore: 1),
+      Modificatore(bersaglio: Bersaglio.intuizione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Mistico'],
   ),
@@ -727,8 +735,10 @@ final List<Capacita> listaCapacita = [
         'Sul tuo mondo tutto è misura e bilanciamento, anche il corpo: non '
         'perdi mai l\'equilibrio, né sui piedi né in una discussione.',
     effetto: 'Agilità +1, Atletica +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.atletica, valore: 1),
+    ],
     costo: 0,
     tag: const ['Equilibrato'],
   ),
@@ -740,11 +750,10 @@ final List<Capacita> listaCapacita = [
         'd\'incontro fra due posizioni prima ancora che le parti lo '
         'cerchino.',
     effetto: 'Socialità +1, Persuasione +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Socialità',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Persuasione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.socialita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.persuasione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Diplomatico'],
   ),
@@ -755,11 +764,10 @@ final List<Capacita> listaCapacita = [
         'La tua gente non resta mai a lungo nello stesso posto: sai sempre '
         'dove dormire, cosa mangiare e quando è il momento di ripartire.',
     effetto: 'Iniziativa +1, Sopravvivenza +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Iniziativa',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Sopravvivenza', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1),
+      Modificatore(bersaglio: Bersaglio.sopravvivenza, valore: 1),
+    ],
     costo: 0,
     tag: const ['Errante'],
   ),
@@ -770,11 +778,10 @@ final List<Capacita> listaCapacita = [
         'Il tuo mondo è più vecchio della sua storia scritta: sei cresciuto '
         'fra rovine, archivi e racconti che altrove nessuno ricorda più.',
     effetto: 'Intelletto +1, Istruzione +1',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Intelletto',
-      valore: 1,
-    ),
-    modificatoreAbilita: const Modificatore(nome: 'Istruzione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.intelletto, valore: 1),
+      Modificatore(bersaglio: Bersaglio.istruzione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Antico'],
   ),
@@ -786,8 +793,10 @@ final List<Capacita> listaCapacita = [
         'nel buio quanto basta e sai aspettare il momento giusto per '
         'colpire.',
     effetto: 'Agilità +1, Percezione +1',
-    modificatoreCaratteristica: const Modificatore(nome: 'Agilità', valore: 1),
-    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.agilita, valore: 1),
+      Modificatore(bersaglio: Bersaglio.percezione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Oscuro'],
   ),
@@ -802,7 +811,9 @@ final List<Capacita> listaCapacita = [
         'Ogni voce arriva già tradotta, e le parole giuste nella lingua '
         'dell\'altro ti salgono alle labbra senza cercarle.',
     effetto: 'Persuasione +1',
-    modificatoreAbilita: const Modificatore(nome: 'Persuasione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.persuasione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Diplomatico'],
   ),
@@ -813,7 +824,9 @@ final List<Capacita> listaCapacita = [
         'Il buio non è più buio: vedi forme e movimenti dove gli altri '
         'vedono solo ombra.',
     effetto: 'Percezione +1',
-    modificatoreAbilita: const Modificatore(nome: 'Percezione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.percezione, valore: 1),
+    ],
     costo: 0,
     tag: const ['Intuitivo'],
   ),
@@ -824,7 +837,9 @@ final List<Capacita> listaCapacita = [
         'Quello che afferri non ti scappa: la stretta dei pistoni non si '
         'allenta finché non lo decidi tu.',
     effetto: 'Mischia Pesante +1',
-    modificatoreAbilita: const Modificatore(nome: 'Mischia Pesante', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.mischiaPesante, valore: 1),
+    ],
     costo: 0,
     tag: const ['Forte'],
   ),

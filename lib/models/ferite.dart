@@ -6,24 +6,18 @@ part 'ferite.g.dart';
 
 /// Modello/Ferite
 ///
-/// Ferite Base e Ferite Massime dipendono dal Valore Totale di Resistenza
-/// del personaggio: non è memorizzato qui, va passato a [base]/[massime]
-/// (stesso pattern di AbilitaPersonaggio.valoreTotale).
+/// Ferite Base dipende dal Valore Totale di Resistenza del personaggio:
+/// non è memorizzato qui, va passato a [base] (stesso pattern di
+/// AbilitaPersonaggio.valoreTotale). Le Ferite Massime le calcola
+/// Modello/Scheda, che conosce anche Modificatori e bonus a mano.
 @JsonSerializable()
 class Ferite {
   final int attuali;
-  final int bonus;
   final GradoFerita gradoFerita;
 
-  const Ferite({
-    this.attuali = 0,
-    this.bonus = 0,
-    this.gradoFerita = GradoFerita.zero,
-  });
+  const Ferite({this.attuali = 0, this.gradoFerita = GradoFerita.zero});
 
   int base(int valoreResistenza) => valoreResistenza;
-
-  int massime(int valoreResistenza) => base(valoreResistenza) + bonus;
 
   factory Ferite.fromJson(Map<String, dynamic> json) => _$FeriteFromJson(json);
 

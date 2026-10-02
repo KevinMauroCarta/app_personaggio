@@ -14,7 +14,6 @@ import '../../models/armi/arma_distanza.dart';
 import '../../models/armatura.dart';
 import '../../models/background.dart';
 import '../../models/capacita.dart';
-import '../../models/modificatore.dart';
 import '../../models/pianeta.dart';
 import '../../models/potere_psionico.dart';
 import '../../models/razza.dart';
@@ -81,13 +80,7 @@ class DettagliBackground extends StatelessWidget {
               campi: [
                 _Campo('Descrizione', b.descrizione),
                 _Campo('Tag', b.tag),
-                if (b.modificatoreCaratteristica != null)
-                  _Campo(
-                    'Mod. Caratteristica',
-                    _modificatore(b.modificatoreCaratteristica!),
-                  ),
-                if (b.modificatoreAbilita != null)
-                  _Campo('Mod. Abilità', _modificatore(b.modificatoreAbilita!)),
+                for (final m in b.modificatori) _Campo('Modificatore', m.testo),
               ],
               capacita: [b.capacitaDiBackground],
               etichettaCapacita: 'Capacità di Background',
@@ -162,9 +155,6 @@ class DettagliPianeta extends StatelessWidget {
     );
   }
 }
-
-String _modificatore(Modificatore m) =>
-    '${m.nome} ${m.valore >= 0 ? '+' : '-'}${m.valore.abs()}';
 
 /// Coppia etichetta/valore di un campo del modello.
 class _Campo {

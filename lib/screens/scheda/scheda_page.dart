@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/lista_lesioni_memorabili.dart';
 import '../../data/lista_lesioni_traumatiche.dart';
 import '../../data/lista_mutazioni.dart';
+import '../../enums/bersaglio.dart';
 import '../../enums/abilita_arma.dart';
 import '../../enums/grado_ferita.dart';
 import '../../enums/scuola_psionica.dart';
@@ -208,11 +209,7 @@ class _SchedaPageState extends State<SchedaPage> {
     iraAttuale: _ira,
     furtivitaPassiva: _furtivitaPassiva,
     shockAttuale: _shockAttuale,
-    ferite: Ferite(
-      attuali: _feriteAttuali,
-      bonus: widget.scheda.ferite.bonus,
-      gradoFerita: _gradoFerita,
-    ),
+    ferite: Ferite(attuali: _feriteAttuali, gradoFerita: _gradoFerita),
     equipaggiamento: _equipaggiamentoCorrente,
     impianti: _impiantiCorrenti,
     personaggio: _personaggioCorrente,
@@ -601,6 +598,10 @@ class _SchedaPageState extends State<SchedaPage> {
               onDiminuisci: () => _impostaFurtivita(_furtivitaPassiva - 1),
               onAumenta: () => _impostaFurtivita(_furtivitaPassiva + 1),
             ),
+            // Il campo qui sopra è la parte scritta a mano: se dei
+            // Modificatori la cambiano, il valore che conta è il totale.
+            if (scheda.bonusDaModificatori(Bersaglio.riservaFurtiva) != 0)
+              _riga('Riserva Furtiva totale', '${scheda.riservaFurtivaTotale}'),
           ]),
           const SizedBox(height: 16),
           _buildSezione('Lesioni & Corruzione', [
@@ -653,7 +654,7 @@ class _SchedaPageState extends State<SchedaPage> {
               dettagli: (m) => _dettagliVoce(
                 m.descrizione,
                 m.effetto,
-                modificatore: m.modificatoreCaratteristica,
+                modificatori: m.modificatori,
               ),
             ),
             // Due valori distinti: i Punti si segnano a mano, il Grado
@@ -891,8 +892,12 @@ class _SchedaPageState extends State<SchedaPage> {
   ///
   /// Un impianto (Chip Neurale o Protesi) ha in più il pulsante per
   /// installarlo: passa alla pagina Punk, e da lì dà i suoi effetti.
-  /// È spento quando gli impianti installati sono già al massimo.
+  /// È spento quando il suo Carico non entra in quello rimasto, e il
+  /// tooltip dice perché.
   Widget _rigaOggetto({required String nome, required int quantita}) {
+    final nonInstallabile = eImpianto(nome)
+        ? _motivoNonInstallabile(_schedaCorrente, nome)
+        : null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -915,8 +920,8 @@ class _SchedaPageState extends State<SchedaPage> {
           if (eImpianto(nome))
             IconButton(
               icon: const Icon(Icons.memory),
-              tooltip: 'Installa $nome',
-              onPressed: _impiantiCorrenti.pieno
+              tooltip: nonInstallabile ?? 'Installa $nome',
+              onPressed: nonInstallabile != null
                   ? null
                   : () => _installaDaOggetti(nome),
             ),
@@ -960,37 +965,37 @@ class _SchedaPageState extends State<SchedaPage> {
 
   /// Pagina Punk (nome provvisorio): gli Impianti installati.
   ///
-  /// In cima quanti impianti sono installati sul massimo
-  /// ([Impianti.massimo]); sotto due sezioni, Chip Neurali e Protesi,
-  /// ognuna con il suo pulsante per installare dal catalogo con la stessa
-  /// modale di ricerca di Equip e Oggetti. Le Protesi sono divise nei
-  /// loro due tipi: i Sostitutivi, che rimpiazzano una parte mancante, e
-  /// gli Esoscheletri, che ne potenziano una sana.
+  /// Due sezioni, Chip Neurali e Protesi, ognuna con il suo Carico (quanto
+  /// è occupato sul limite: Volontà per i chip, Resistenza per le protesi)
+  /// e il suo pulsante per installare dal catalogo con la stessa modale di
+  /// ricerca di Equip e Oggetti. Le Protesi sono divise nei loro due tipi:
+  /// i Sostitutivi, che rimpiazzano una parte mancante, e gli
+  /// Esoscheletri, che ne potenziano una sana.
   ///
   /// Quello che sta in questa pagina è installato e dà i suoi effetti.
   /// Disinstallato, un impianto finisce fra gli Oggetti, e da lì si può
   /// installare di nuovo.
   Widget _buildPaginaPunk() {
+    final scheda = _schedaCorrente;
     final sostitutivi = _protesi
         .where((p) => p.tipo == TipoProtesi.sostitutivo)
         .toList();
     final esoscheletri = _protesi
         .where((p) => p.tipo == TipoProtesi.esoscheletro)
         .toList();
-    final pieno = _impiantiCorrenti.pieno;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _contatoreImpianti(),
-          const SizedBox(height: 16),
           _buildSezione('Chip Neurali', [
-            _pulsanteAggiungi(
-              'Aggiungi chip neurale',
-              pieno ? null : _aggiungiChipNeurale,
+            _rigaCarico(
+              usato: scheda.impianti.caricoChip,
+              limite: scheda.limiteCaricoChip,
+              caratteristica: 'Volontà',
             ),
+            _pulsanteAggiungi('Aggiungi chip neurale', _aggiungiChipNeurale),
             if (_chipNeurali.isEmpty)
               _nessuno('Nessun chip neurale.')
             else
@@ -999,6 +1004,7 @@ class _SchedaPageState extends State<SchedaPage> {
                   nome: chip.nome,
                   dettaglio: _dettaglioImpianto(
                     'Chip Neurale',
+                    chip.carico,
                     chip.modificatori,
                     chip.capacita?.nome,
                   ),
@@ -1010,10 +1016,12 @@ class _SchedaPageState extends State<SchedaPage> {
           ]),
           const SizedBox(height: 16),
           _buildSezione('Protesi', [
-            _pulsanteAggiungi(
-              'Aggiungi protesi',
-              pieno ? null : _aggiungiProtesi,
+            _rigaCarico(
+              usato: scheda.impianti.caricoProtesi,
+              limite: scheda.limiteCaricoProtesi,
+              caratteristica: 'Resistenza',
             ),
+            _pulsanteAggiungi('Aggiungi protesi', _aggiungiProtesi),
             _sottoTitolo('Sostitutivi'),
             if (sostitutivi.isEmpty)
               _nessuno('Nessun sostitutivo.')
@@ -1030,50 +1038,46 @@ class _SchedaPageState extends State<SchedaPage> {
     );
   }
 
-  /// "Impianti installati  x/5", in cima alla pagina.
+  /// "Carico  x/y", in cima alla sezione: quanto Carico è installato sul
+  /// massimo che la [caratteristica] permette.
   ///
-  /// Arrivati al massimo il numero si colora e una riga dice come fare
-  /// posto: i pulsanti per installare sono spenti, e senza spiegazione
-  /// sembrerebbero rotti.
-  Widget _contatoreImpianti() {
-    final impianti = _impiantiCorrenti;
+  /// Il limite può scendere sotto il Carico già installato - per esempio
+  /// abbassando la caratteristica in Modifica - e gli impianti restano: in
+  /// quel caso il numero diventa rosso e una riga spiega che non se ne
+  /// installano altri finché non si torna sotto.
+  Widget _rigaCarico({
+    required int usato,
+    required int limite,
+    required String caratteristica,
+  }) {
     final colori = Theme.of(context).colorScheme;
+    final oltre = usato > limite;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Impianti installati',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Text(
-                  '${impianti.totale}/${Impianti.massimo}',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: impianti.pieno ? colori.error : colori.primary,
-                  ),
-                ),
-              ],
-            ),
-            if (impianti.pieno)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Limite raggiunto: disinstalla un impianto per '
-                  'installarne un altro.',
-                  style: TextStyle(fontSize: 12, color: colori.error),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text('Carico (limite: $caratteristica)')),
+              Text(
+                '$usato/$limite',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: oltre ? colori.error : colori.primary,
                 ),
               ),
-          ],
-        ),
+            ],
+          ),
+          if (oltre)
+            Text(
+              'Oltre il limite: disinstalla un impianto per installarne '
+              'altri.',
+              style: TextStyle(fontSize: 12, color: colori.error),
+            ),
+        ],
       ),
     );
   }
@@ -1083,6 +1087,7 @@ class _SchedaPageState extends State<SchedaPage> {
       nome: protesi.nome,
       dettaglio: _dettaglioImpianto(
         protesi.parte.label,
+        protesi.carico,
         protesi.modificatori,
         protesi.capacita?.nome,
       ),
@@ -1094,24 +1099,56 @@ class _SchedaPageState extends State<SchedaPage> {
   }
 
   /// La riga sotto il nome di un impianto: cosa è (Chip Neurale, o la
-  /// parte del corpo della protesi), i suoi Modificatori e la Capacità da
-  /// Impianto che concede, se ne ha.
+  /// parte del corpo della protesi), il suo Carico, i suoi Modificatori e
+  /// la Capacità da Impianto che concede, se ne ha.
   String _dettaglioImpianto(
     String cosa,
+    int carico,
     List<Modificatore> modificatori,
     String? capacita,
   ) => [
     cosa,
-    ...modificatori.map(testoModificatore),
+    'Carico $carico',
+    ...modificatori.map((m) => m.testo),
     if (capacita != null) 'Capacità: $capacita',
   ].join(' · ');
 
+  /// Perché l'impianto [nome] non si può installare su [scheda], o null
+  /// se si può: il suo Carico non entra in quello rimasto libero.
+  String? _motivoNonInstallabile(Scheda scheda, String nome) {
+    final chip = chipNeuraleDaNome(nome);
+    if (chip != null) {
+      return scheda.entraChip(chip)
+          ? null
+          : _nonEntra(
+              chip.carico,
+              scheda.limiteCaricoChip - scheda.impianti.caricoChip,
+            );
+    }
+    final protesi = protesiDaNome(nome);
+    if (protesi != null) {
+      return scheda.entraProtesi(protesi)
+          ? null
+          : _nonEntra(
+              protesi.carico,
+              scheda.limiteCaricoProtesi - scheda.impianti.caricoProtesi,
+            );
+    }
+    return null;
+  }
+
+  /// "Carico 3, liberi 1": il motivo per cui un impianto non entra.
+  String _nonEntra(int carico, int liberi) =>
+      'Carico $carico, liberi ${liberi < 0 ? 0 : liberi}';
+
   /// Installa l'impianto [nome] preso dagli Oggetti: ne toglie una copia
-  /// dall'inventario e lo mette fra gli impianti installati.
+  /// dall'inventario e lo mette fra gli impianti installati. Non fa niente
+  /// se il suo Carico non entra.
   void _installaDaOggetti(String nome) {
     final chip = chipNeuraleDaNome(nome);
     final protesi = protesiDaNome(nome);
-    if (_impiantiCorrenti.pieno || (chip == null && protesi == null)) return;
+    if (chip == null && protesi == null) return;
+    if (_motivoNonInstallabile(_schedaCorrente, nome) != null) return;
     _modifica(() {
       _oggetti.remove(nome);
       if (chip != null) _chipNeurali.add(chip);
@@ -1195,7 +1232,10 @@ class _SchedaPageState extends State<SchedaPage> {
     );
   }
 
+  /// I chip che non entrano nel Carico rimasto compaiono lo stesso, ma
+  /// spenti e con il motivo: così si vede cosa servirebbe per averli.
   Future<void> _aggiungiChipNeurale() async {
+    final scheda = _schedaCorrente;
     final scelto = await showDialog<String>(
       context: context,
       builder: (_) => DialogSceltaCatalogo(
@@ -1205,6 +1245,7 @@ class _SchedaPageState extends State<SchedaPage> {
         testoVuoto: 'Nessun chip trovato.',
         iconaScelta: Icons.add_circle_outline,
         tooltipScelta: (nome) => 'Aggiungi $nome',
+        motivoBloccato: (nome) => _motivoNonInstallabile(scheda, nome),
       ),
     );
     final chip = scelto == null ? null : chipNeuraleDaNome(scelto);
@@ -1212,7 +1253,9 @@ class _SchedaPageState extends State<SchedaPage> {
     _modifica(() => _chipNeurali.add(chip));
   }
 
+  /// Vedi [_aggiungiChipNeurale]: lo stesso, sul Carico delle protesi.
   Future<void> _aggiungiProtesi() async {
+    final scheda = _schedaCorrente;
     final scelta = await showDialog<String>(
       context: context,
       builder: (_) => DialogSceltaCatalogo(
@@ -1222,6 +1265,7 @@ class _SchedaPageState extends State<SchedaPage> {
         testoVuoto: 'Nessuna protesi trovata.',
         iconaScelta: Icons.add_circle_outline,
         tooltipScelta: (nome) => 'Aggiungi $nome',
+        motivoBloccato: (nome) => _motivoNonInstallabile(scheda, nome),
       ),
     );
     final protesi = scelta == null ? null : protesiDaNome(scelta);
@@ -1631,18 +1675,8 @@ class _SchedaPageState extends State<SchedaPage> {
                   _riga('Tipo', c.tipo.label),
                   _riga('Descrizione', c.descrizione),
                   _riga('Effetto', c.effetto),
-                  if (c.modificatoreCaratteristica != null)
-                    _riga(
-                      'Mod. Caratteristica',
-                      '${c.modificatoreCaratteristica!.nome} '
-                          '${_conSegno(c.modificatoreCaratteristica!.valore)}',
-                    ),
-                  if (c.modificatoreAbilita != null)
-                    _riga(
-                      'Mod. Abilità',
-                      '${c.modificatoreAbilita!.nome} '
-                          '${_conSegno(c.modificatoreAbilita!.valore)}',
-                    ),
+                  for (final m in c.modificatori)
+                    _riga('Modificatore', m.testo),
                   _riga('Costo', '${c.costo} PE'),
                   if (c.tag.isNotEmpty) _riga('Tag', c.tag.join(', ')),
                 ]),
@@ -1679,11 +1713,7 @@ class _SchedaPageState extends State<SchedaPage> {
           _riga('Concessa da', daChi(c.nome)),
           _riga('Descrizione', c.descrizione),
           _riga('Effetto', c.effetto),
-          for (final m in [
-            ?c.modificatoreCaratteristica,
-            ?c.modificatoreAbilita,
-          ])
-            _riga('Modificatore', testoModificatore(m)),
+          for (final m in c.modificatori) _riga('Modificatore', m.testo),
           if (c.tag.isNotEmpty) _riga('Tag', c.tag.join(', ')),
         ]),
     ];
@@ -1908,10 +1938,6 @@ class _SchedaPageState extends State<SchedaPage> {
     );
   }
 
-  /// Formatta il valore di un Modificatore con il segno esplicito, come
-  /// compare sulla scheda cartacea (es. "+1", "-2").
-  String _conSegno(int valore) => valore >= 0 ? '+$valore' : '$valore';
-
   Widget _sottoTitolo(String testo) {
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
@@ -1919,7 +1945,7 @@ class _SchedaPageState extends State<SchedaPage> {
     );
   }
 
-  /// [azione] finisce a fianco del titolo, fuori dall'area che apre ew
+  /// [azione] finisce a fianco del titolo, fuori dall'area che apre e
   /// chiude la sezione: serve al Pulsante Info di Sopravvivenza.
   Widget _buildSezione(
     String titolo,
@@ -2250,11 +2276,11 @@ class _SchedaPageState extends State<SchedaPage> {
 
   /// Contenuto del Pulsante Info di una Lesione o di una Mutazione:
   /// cosa è, cosa comporta e - per le Mutazioni, le uniche ad averlo -
-  /// il Modificatore che finisce davvero nel Valore Bonus.
+  /// i Modificatori che entrano davvero nei valori della scheda.
   Widget _dettagliVoce(
     String descrizione,
     String effetto, {
-    Modificatore? modificatore,
+    List<Modificatore> modificatori = const [],
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -2262,11 +2288,7 @@ class _SchedaPageState extends State<SchedaPage> {
       children: [
         _riga('Descrizione', descrizione),
         _riga('Effetto', effetto),
-        if (modificatore != null)
-          _riga(
-            'Modificatore',
-            '${modificatore.nome} ${_conSegno(modificatore.valore)}',
-          ),
+        for (final m in modificatori) _riga('Modificatore', m.testo),
       ],
     );
   }

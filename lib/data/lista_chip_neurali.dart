@@ -1,6 +1,7 @@
 import '../enums/rarita.dart';
 import 'lista_capacita.dart';
 import '../models/chip_neurale.dart';
+import '../enums/bersaglio.dart';
 import '../models/modificatore.dart';
 
 /// Lista/ChipNeurali
@@ -21,10 +22,10 @@ final List<ChipNeurale> listaChipNeurali = [
         'Accorcia il tragitto fra occhio e muscolo: il corpo reagisce '
         'prima che la mente se ne accorga.',
     effetto: 'Iniziativa +1.',
-    modificatoreCaratteristica: const Modificatore(
-      nome: 'Iniziativa',
-      valore: 1,
-    ),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1),
+    ],
+    carico: 2,
     valore: 40,
     rarita: Rarita.nonComune,
   ),
@@ -34,7 +35,8 @@ final List<ChipNeurale> listaChipNeurali = [
         'Calcola traiettoria, vento e rinculo e li proietta sulla vista '
         'come una linea sottile.',
     effetto: 'Mira +1.',
-    modificatoreAbilita: const Modificatore(nome: 'Mira', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.mira, valore: 1)],
+    carico: 1,
     valore: 35,
     rarita: Rarita.nonComune,
   ),
@@ -44,7 +46,10 @@ final List<ChipNeurale> listaChipNeurali = [
         'Archivia tutto quello che il personaggio legge o ascolta, e lo '
         'richiama a comando.',
     effetto: 'Istruzione +1.',
-    modificatoreAbilita: const Modificatore(nome: 'Istruzione', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.istruzione, valore: 1),
+    ],
+    carico: 1,
     valore: 30,
     rarita: Rarita.comune,
   ),
@@ -58,6 +63,7 @@ final List<ChipNeurale> listaChipNeurali = [
         'Le lingue rare o antiche richiedono comunque un test di '
         'Istruzione. Concede la Capacità Poliglotta.',
     capacita: capacitaDaNome('Poliglotta'),
+    carico: 2,
     valore: 50,
     rarita: Rarita.rara,
   ),

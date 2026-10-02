@@ -13,12 +13,10 @@ part 'chip_neurale.g.dart';
 /// [capacita], una Capacità da Impianto (TipoCapacita.impianto) - o
 /// tutte e due le cose.
 ///
-/// I Modificatori hanno la stessa forma di quelli di Modello/Capacità
-/// (nome di una Caratteristica o di un'Abilità + valore), ed entrano nel
-/// Valore Bonus del personaggio insieme a quelli di Capacità, Background
-/// e Mutazioni (Servizio/EffettiPersonaggio): installato il chip, la
-/// Caratteristica o l'Abilità sale; disinstallato, scende. Lo stesso per
-/// la Capacità concessa.
+/// I Modificatori (Modello/Modificatore) valgono insieme a quelli di
+/// Capacità, Background e Mutazioni (Servizio/EffettiPersonaggio):
+/// installato il chip, il valore che toccano sale; disinstallato, scende.
+/// Lo stesso per la Capacità concessa.
 @JsonSerializable()
 class ChipNeurale {
   final String nome;
@@ -26,11 +24,19 @@ class ChipNeurale {
   final String descrizione;
   @JsonKey(defaultValue: '')
   final String effetto;
-  final Modificatore? modificatoreCaratteristica;
-  final Modificatore? modificatoreAbilita;
+
+  /// I Modificatori che porta: su Caratteristiche, Abilità o valori della
+  /// Scheda (Modello/Modificatore).
+  @JsonKey(readValue: leggiModificatori)
+  final List<Modificatore> modificatori;
 
   /// La Capacità da Impianto che il chip dà finché è installato.
   final Capacita? capacita;
+
+  /// Quanto pesa sulla mente: la somma dei Carichi dei chip installati non
+  /// può superare la Volontà del personaggio (vedi Modello/Scheda).
+  @JsonKey(defaultValue: 1)
+  final int carico;
 
   /// Quanto costa procurarselo, sulla stessa scala di Modello/Armi/Arma.
   @JsonKey(defaultValue: 0)
@@ -43,18 +49,12 @@ class ChipNeurale {
     required this.nome,
     required this.descrizione,
     required this.effetto,
-    this.modificatoreCaratteristica,
-    this.modificatoreAbilita,
+    this.modificatori = const [],
     this.capacita,
+    required this.carico,
     required this.valore,
     required this.rarita,
   });
-
-  /// I Modificatori presenti, senza i null.
-  List<Modificatore> get modificatori => [
-    ?modificatoreCaratteristica,
-    ?modificatoreAbilita,
-  ];
 
   factory ChipNeurale.fromJson(Map<String, dynamic> json) =>
       _$ChipNeuraleFromJson(json);

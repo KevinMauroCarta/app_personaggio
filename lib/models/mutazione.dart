@@ -10,13 +10,16 @@ class Mutazione {
   final String nome;
   final String descrizione;
   final String effetto;
-  final Modificatore? modificatoreCaratteristica;
+
+  /// I Modificatori che porta (Modello/Modificatore).
+  @JsonKey(readValue: leggiModificatori)
+  final List<Modificatore> modificatori;
 
   const Mutazione({
     required this.nome,
     required this.descrizione,
     required this.effetto,
-    this.modificatoreCaratteristica,
+    this.modificatori = const [],
   });
 
   factory Mutazione.fromJson(Map<String, dynamic> json) =>

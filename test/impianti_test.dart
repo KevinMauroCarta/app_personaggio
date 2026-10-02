@@ -21,6 +21,7 @@ import 'package:app_personaggio/data/lista_oggetti.dart';
 import 'package:app_personaggio/data/lista_protesi.dart';
 import 'package:app_personaggio/data/lista_razze.dart';
 import 'package:app_personaggio/data/lista_sistemi.dart';
+import 'package:app_personaggio/enums/bersaglio.dart';
 import 'package:app_personaggio/enums/genere.dart';
 import 'package:app_personaggio/enums/parte_corpo.dart';
 import 'package:app_personaggio/enums/tipo_capacita.dart';
@@ -28,20 +29,32 @@ import 'package:app_personaggio/enums/tipo_protesi.dart';
 import 'package:app_personaggio/models/abilita_personaggio.dart';
 import 'package:app_personaggio/models/capacita.dart';
 import 'package:app_personaggio/models/caratteristica_personaggio.dart';
-import 'package:app_personaggio/models/chip_neurale.dart';
 import 'package:app_personaggio/models/equipaggiamento.dart';
 import 'package:app_personaggio/models/impianti.dart';
+import 'package:app_personaggio/models/modificatore.dart';
 import 'package:app_personaggio/models/personaggio.dart';
-import 'package:app_personaggio/models/protesi.dart';
 import 'package:app_personaggio/models/scheda.dart';
 import 'package:app_personaggio/screens/creazione_pg/creazione_pg_dati.dart'
     show capacitaGenericheOptions;
 import 'package:app_personaggio/screens/scheda/criteri_catalogo.dart';
+import 'package:app_personaggio/screens/scheda/dialog_scelta_catalogo.dart';
 import 'package:app_personaggio/screens/scheda/scheda_dati.dart';
 import 'package:app_personaggio/screens/scheda/scheda_page.dart';
 import 'package:app_personaggio/services/effetti_personaggio.dart';
 
 import 'linguette_scheda.dart';
+
+/// Il primo dei [modificatori] che tocca una voce di [categoria], null se
+/// non ce n'è.
+Modificatore? _di(
+  List<Modificatore> modificatori,
+  CategoriaBersaglio categoria,
+) {
+  for (final m in modificatori) {
+    if (m.bersaglio.categoria == categoria) return m;
+  }
+  return null;
+}
 
 final _chip = listaChipNeurali.first;
 final _sostitutivo = listaProtesi.firstWhere(
@@ -117,7 +130,20 @@ Future<void> _aggiungi(
   String nome,
 ) async {
   await _tocca(tester, find.widgetWithText(OutlinedButton, pulsante));
-  await _tocca(tester, find.byTooltip('Aggiungi $nome'));
+  // L'elenco della modale costruisce solo le righe in vista: una voce in
+  // fondo va raggiunta scorrendo.
+  final voce = find.byTooltip('Aggiungi $nome');
+  await tester.scrollUntilVisible(
+    voce,
+    100,
+    scrollable: find
+        .descendant(
+          of: find.byType(DialogSceltaCatalogo),
+          matching: find.byType(Scrollable),
+        )
+        .last,
+  );
+  await _tocca(tester, voce);
 }
 
 void main() {
@@ -134,8 +160,8 @@ void main() {
 
       expect(riletta.chipNeurali.single.nome, _chip.nome);
       expect(
-        riletta.chipNeurali.single.modificatori.map(testoModificatore),
-        _chip.modificatori.map(testoModificatore),
+        riletta.chipNeurali.single.modificatori.map((m) => m.testo),
+        _chip.modificatori.map((m) => m.testo),
       );
       expect(riletta.protesi.map((p) => p.nome), [
         _sostitutivo.nome,
@@ -186,17 +212,19 @@ void main() {
     // nel Valore Bonus, senza che niente lo segnali.
     test('i Modificatori puntano a Caratteristiche e Abilità vere', () {
       final impianti = [
-        for (final c in listaChipNeurali)
-          (c.nome, c.modificatoreCaratteristica, c.modificatoreAbilita),
-        for (final p in listaProtesi)
-          (p.nome, p.modificatoreCaratteristica, p.modificatoreAbilita),
+        for (final c in listaChipNeurali) (c.nome, c.modificatori),
+        for (final p in listaProtesi) (p.nome, p.modificatori),
       ];
-      for (final (nome, caratteristica, abilita) in impianti) {
-        if (caratteristica != null) {
-          expect(nomiCaratteristiche, contains(caratteristica.nome));
-        }
-        if (abilita != null) {
-          expect(nomiAbilita, contains(abilita.nome), reason: nome);
+      for (final (nome, modificatori) in impianti) {
+        for (final m in modificatori) {
+          switch (m.bersaglio.categoria) {
+            case CategoriaBersaglio.caratteristica:
+              expect(nomiCaratteristiche, contains(m.bersaglio.label));
+            case CategoriaBersaglio.abilita:
+              expect(nomiAbilita, contains(m.bersaglio.label), reason: nome);
+            case CategoriaBersaglio.scheda:
+              break;
+          }
         }
       }
     });
@@ -207,7 +235,7 @@ void main() {
         for (final p in listaProtesi) (p.nome, p.effetto, p.modificatori),
       ]) {
         for (final m in modificatori) {
-          expect(effetto, contains(testoModificatore(m)), reason: nome);
+          expect(effetto, contains(m.testo), reason: nome);
         }
       }
     });
@@ -314,14 +342,19 @@ void main() {
     });
 
     testWidgets('ogni protesi finisce sotto il suo tipo', (tester) async {
+      // Un esoscheletro leggero: con la Resistenza 3 della scheda di prova
+      // il Sostitutivo (Carico 2) lascia un solo punto libero.
+      final leggero = listaProtesi.firstWhere(
+        (p) => p.tipo == TipoProtesi.esoscheletro && p.carico == 1,
+      );
       final salvate = await _apriPunk(tester);
 
       await _aggiungi(tester, 'Aggiungi protesi', _sostitutivo.nome);
-      await _aggiungi(tester, 'Aggiungi protesi', _esoscheletro.nome);
+      await _aggiungi(tester, 'Aggiungi protesi', leggero.nome);
 
       expect(salvate.last.impianti.protesi.map((p) => p.nome), [
         _sostitutivo.nome,
-        _esoscheletro.nome,
+        leggero.nome,
       ]);
 
       // Il sostitutivo fra "Sostitutivi" ed "Esoscheletri", l'esoscheletro
@@ -331,32 +364,36 @@ void main() {
       final esoscheletri = y(find.text('Esoscheletri'));
       expect(y(find.text(_sostitutivo.nome)), greaterThan(sostitutivi));
       expect(y(find.text(_sostitutivo.nome)), lessThan(esoscheletri));
-      expect(y(find.text(_esoscheletro.nome)), greaterThan(esoscheletri));
+      expect(y(find.text(leggero.nome)), greaterThan(esoscheletri));
     });
 
     testWidgets('la stessa protesi si può avere due volte', (tester) async {
+      // Di Carico 1, così due stanno nella Resistenza 3.
+      final leggera = listaProtesi.firstWhere((p) => p.carico == 1);
       final salvate = await _apriPunk(tester);
 
-      await _aggiungi(tester, 'Aggiungi protesi', _sostitutivo.nome);
-      await _aggiungi(tester, 'Aggiungi protesi', _sostitutivo.nome);
+      await _aggiungi(tester, 'Aggiungi protesi', leggera.nome);
+      await _aggiungi(tester, 'Aggiungi protesi', leggera.nome);
 
       expect(salvate.last.impianti.protesi, hasLength(2));
-      expect(find.text(_sostitutivo.nome), findsNWidgets(2));
+      expect(find.text(leggera.nome), findsNWidgets(2));
     });
 
-    testWidgets('sotto il nome: parte del corpo, Modificatori e Capacità', (
-      tester,
-    ) async {
-      await _apriPunk(tester, impianti: Impianti(protesi: [_esoscheletro]));
+    testWidgets(
+      'sotto il nome: parte del corpo, Carico, Modificatori e Capacità',
+      (tester) async {
+        await _apriPunk(tester, impianti: Impianti(protesi: [_esoscheletro]));
 
-      final atteso = [
-        _esoscheletro.parte.label,
-        ..._esoscheletro.modificatori.map(testoModificatore),
-        if (_esoscheletro.capacita != null)
-          'Capacità: ${_esoscheletro.capacita!.nome}',
-      ].join(' · ');
-      expect(find.text(atteso), findsOneWidget);
-    });
+        final atteso = [
+          _esoscheletro.parte.label,
+          'Carico ${_esoscheletro.carico}',
+          ..._esoscheletro.modificatori.map((m) => m.testo),
+          if (_esoscheletro.capacita != null)
+            'Capacità: ${_esoscheletro.capacita!.nome}',
+        ].join(' · ');
+        expect(find.text(atteso), findsOneWidget);
+      },
+    );
 
     testWidgets('toccando il nome si aprono tutti i dati', (tester) async {
       await _apriPunk(tester, impianti: Impianti(chipNeurali: [_chip]));
@@ -422,15 +459,15 @@ void main() {
   group('i Modificatori funzionano', () {
     // Presi per il loro Modificatore, non per nome: sono segnaposto.
     final chipCaratteristica = listaChipNeurali.firstWhere(
-      (c) => c.modificatoreCaratteristica != null,
+      (c) => _di(c.modificatori, CategoriaBersaglio.caratteristica) != null,
     );
     final chipAbilita = listaChipNeurali.firstWhere(
-      (c) => c.modificatoreAbilita != null,
+      (c) => _di(c.modificatori, CategoriaBersaglio.abilita) != null,
     );
     final esoscheletroCaratteristica = listaProtesi.firstWhere(
       (p) =>
           p.tipo == TipoProtesi.esoscheletro &&
-          p.modificatoreCaratteristica != null,
+          _di(p.modificatori, CategoriaBersaglio.caratteristica) != null,
     );
 
     int caratteristica(Scheda s, String nome) => s.personaggio.caratteristiche
@@ -442,35 +479,52 @@ void main() {
         .valoreBonus;
 
     test('il bonus conta chip e protesi', () {
-      final m = chipCaratteristica.modificatoreCaratteristica!;
-      final e = esoscheletroCaratteristica.modificatoreCaratteristica!;
-      final a = chipAbilita.modificatoreAbilita!;
+      final m = _di(
+        chipCaratteristica.modificatori,
+        CategoriaBersaglio.caratteristica,
+      )!;
+      final e = _di(
+        esoscheletroCaratteristica.modificatori,
+        CategoriaBersaglio.caratteristica,
+      )!;
+      final a = _di(chipAbilita.modificatori, CategoriaBersaglio.abilita)!;
       final impianti = Impianti(
         chipNeurali: [chipCaratteristica, chipAbilita],
         protesi: [esoscheletroCaratteristica],
       );
 
       expect(
-        bonusCaratteristica(m.nome, capacita: const [], impianti: impianti),
-        m.valore + (e.nome == m.nome ? e.valore : 0),
+        bonusCaratteristica(
+          m.bersaglio.label,
+          capacita: const [],
+          impianti: impianti,
+        ),
+        m.valore + (e.bersaglio.label == m.bersaglio.label ? e.valore : 0),
       );
       expect(
-        bonusCaratteristica(e.nome, capacita: const [], impianti: impianti),
-        e.valore + (e.nome == m.nome ? m.valore : 0),
+        bonusCaratteristica(
+          e.bersaglio.label,
+          capacita: const [],
+          impianti: impianti,
+        ),
+        e.valore + (e.bersaglio.label == m.bersaglio.label ? m.valore : 0),
       );
       expect(
-        bonusAbilita(a.nome, capacita: const [], impianti: impianti),
+        bonusAbilita(a.bersaglio.label, capacita: const [], impianti: impianti),
         a.valore,
       );
       // Senza impianti, niente.
-      expect(bonusCaratteristica(m.nome, capacita: const []), 0);
+      expect(bonusCaratteristica(m.bersaglio.label, capacita: const []), 0);
     });
 
     test('dopo Modifica o Aumento i bonus degli impianti restano', () {
       // Modifica e Aumento ricalcolano senza impianti: il personaggio che
       // tornano ha bonus zero. La Home lo rimette nella scheda passando
       // da conEffettiRicalcolati con gli impianti della scheda.
-      final m = chipCaratteristica.modificatoreCaratteristica!;
+      final m = _di(
+        chipCaratteristica.modificatori,
+        CategoriaBersaglio.caratteristica,
+      )!;
       final senza = _scheda().personaggio;
 
       final con = conEffettiRicalcolati(
@@ -479,7 +533,7 @@ void main() {
       );
 
       int totale(Personaggio p) => p.caratteristiche
-          .firstWhere((c) => c.caratteristica.nome == m.nome)
+          .firstWhere((c) => c.caratteristica.nome == m.bersaglio.label)
           .valoreTotale;
       expect(totale(con), totale(senza) + m.valore);
       // Il resto del personaggio non cambia.
@@ -490,33 +544,39 @@ void main() {
     testWidgets('installare un chip alza la Caratteristica, toglierlo no', (
       tester,
     ) async {
-      final m = chipCaratteristica.modificatoreCaratteristica!;
+      final m = _di(
+        chipCaratteristica.modificatori,
+        CategoriaBersaglio.caratteristica,
+      )!;
       final salvate = await _apriPunk(tester);
-      final prima = caratteristica(_scheda(), m.nome);
+      final prima = caratteristica(_scheda(), m.bersaglio.label);
 
       await _aggiungi(tester, 'Aggiungi chip neurale', chipCaratteristica.nome);
-      expect(caratteristica(salvate.last, m.nome), prima + m.valore);
+      expect(caratteristica(salvate.last, m.bersaglio.label), prima + m.valore);
 
       await _tocca(
         tester,
         find.byTooltip('Disinstalla ${chipCaratteristica.nome}'),
       );
-      expect(caratteristica(salvate.last, m.nome), prima);
+      expect(caratteristica(salvate.last, m.bersaglio.label), prima);
     });
 
     testWidgets('un chip d Abilità alza l Abilità', (tester) async {
-      final a = chipAbilita.modificatoreAbilita!;
+      final a = _di(chipAbilita.modificatori, CategoriaBersaglio.abilita)!;
       final salvate = await _apriPunk(tester);
 
       await _aggiungi(tester, 'Aggiungi chip neurale', chipAbilita.nome);
 
-      expect(bonusAbilitaDi(salvate.last, a.nome), a.valore);
+      expect(bonusAbilitaDi(salvate.last, a.bersaglio.label), a.valore);
     });
 
     testWidgets('un esoscheletro alza la Caratteristica', (tester) async {
-      final e = esoscheletroCaratteristica.modificatoreCaratteristica!;
+      final e = _di(
+        esoscheletroCaratteristica.modificatori,
+        CategoriaBersaglio.caratteristica,
+      )!;
       final salvate = await _apriPunk(tester);
-      final prima = caratteristica(_scheda(), e.nome);
+      final prima = caratteristica(_scheda(), e.bersaglio.label);
 
       await _aggiungi(
         tester,
@@ -524,13 +584,16 @@ void main() {
         esoscheletroCaratteristica.nome,
       );
 
-      expect(caratteristica(salvate.last, e.nome), prima + e.valore);
+      expect(caratteristica(salvate.last, e.bersaglio.label), prima + e.valore);
     });
 
     testWidgets('il bonus si vede nella pagina Abilità', (tester) async {
       // Il chip è già installato all'apertura: la scheda salvata non ha
       // ancora il bonus, ma la pagina lo ricalcola.
-      final m = chipCaratteristica.modificatoreCaratteristica!;
+      final m = _di(
+        chipCaratteristica.modificatori,
+        CategoriaBersaglio.caratteristica,
+      )!;
       await _apriPunk(
         tester,
         impianti: Impianti(chipNeurali: [chipCaratteristica]),
@@ -541,7 +604,10 @@ void main() {
       // Caratteristiche (Caratteristica, Totale, Base, Bonus); dopo
       // torna come titolo dei gruppi di Abilità.
       final riga = find
-          .ancestor(of: find.text(m.nome).first, matching: find.byType(Row))
+          .ancestor(
+            of: find.text(m.bersaglio.label).first,
+            matching: find.byType(Row),
+          )
           .first;
       final celle = tester
           .widgetList<Text>(
@@ -549,66 +615,112 @@ void main() {
           )
           .map((t) => t.data)
           .toList();
-      final base = caratteristica(_scheda(), m.nome);
-      expect(celle, [m.nome, '${base + m.valore}', '$base', '${m.valore}']);
+      final base = caratteristica(_scheda(), m.bersaglio.label);
+      expect(celle, [
+        m.bersaglio.label,
+        '${base + m.valore}',
+        '$base',
+        '${m.valore}',
+      ]);
     });
   });
 
-  group('limite di impianti', () {
-    /// [n] impianti installati, chip finché bastano e poi protesi.
-    Impianti installati(int n) {
-      final tutti = <Object>[...listaChipNeurali, ...listaProtesi];
-      final scelti = [for (var i = 0; i < n; i++) tutti[i % tutti.length]];
-      return Impianti(
-        chipNeurali: scelti.whereType<ChipNeurale>().toList(),
-        protesi: scelti.whereType<Protesi>().toList(),
-      );
-    }
+  group('Carico degli impianti', () {
+    // La scheda di prova ha tutte le Caratteristiche a 3: Volontà e
+    // Resistenza reggono 3 punti di Carico ciascuna.
+    final leggero = listaChipNeurali.firstWhere((c) => c.carico == 1);
+    final pesante = listaChipNeurali.firstWhere((c) => c.carico == 2);
 
-    test('il massimo è 5, chip e protesi insieme', () {
-      expect(Impianti.massimo, 5);
-      expect(installati(4).pieno, isFalse);
-      expect(installati(5).pieno, isTrue);
-      expect(installati(5).totale, 5);
+    test('ogni impianto ha Carico da 1 a 3', () {
+      for (final (nome, carico) in [
+        for (final c in listaChipNeurali) (c.nome, c.carico),
+        for (final p in listaProtesi) (p.nome, p.carico),
+      ]) {
+        expect(carico, inInclusiveRange(1, 3), reason: nome);
+      }
     });
 
-    testWidgets('in cima c è quanti ne sono installati, su 5', (tester) async {
-      await _apriPunk(tester, impianti: installati(2));
-
-      expect(find.text('Impianti installati'), findsOneWidget);
-      expect(find.text('2/5'), findsOneWidget);
-      // Sopra le sezioni.
-      expect(
-        tester.getTopLeft(find.text('2/5')).dy,
-        lessThan(tester.getTopLeft(find.text('Chip Neurali')).dy),
-      );
+    test('nessun impianto tocca Volontà o Resistenza', () {
+      // Sono i limiti del Carico: un impianto che li alzasse si
+      // allargherebbe il posto da solo.
+      for (final (nome, modificatori) in [
+        for (final c in listaChipNeurali) (c.nome, c.modificatori),
+        for (final p in listaProtesi) (p.nome, p.modificatori),
+      ]) {
+        for (final m in modificatori) {
+          expect(
+            m.bersaglio,
+            isNot(anyOf(Bersaglio.volonta, Bersaglio.resistenza)),
+            reason: nome,
+          );
+        }
+      }
     });
 
-    testWidgets('il contatore segue installazioni e disinstallazioni', (
+    test('il Carico si somma per tipo', () {
+      final impianti = Impianti(
+        chipNeurali: [leggero, pesante],
+        protesi: [_sostitutivo],
+      );
+      expect(impianti.caricoChip, leggero.carico + pesante.carico);
+      expect(impianti.caricoProtesi, _sostitutivo.carico);
+    });
+
+    test('il limite è Volontà per i chip e Resistenza per le protesi', () {
+      expect(_scheda().limiteCaricoChip, 3);
+      expect(_scheda().limiteCaricoProtesi, 3);
+
+      final occupata = _scheda(impianti: Impianti(chipNeurali: [pesante]));
+      expect(occupata.entraChip(leggero), isTrue, reason: '2 + 1 = 3');
+      expect(occupata.entraChip(pesante), isFalse, reason: '2 + 2 = 4');
+      // Le protesi hanno il loro limite: i chip non lo toccano.
+      expect(occupata.entraProtesi(_sostitutivo), isTrue);
+    });
+
+    testWidgets('ogni sezione mostra il suo Carico', (tester) async {
+      await _apriPunk(tester);
+      expect(find.text('Carico (limite: Volontà)'), findsOneWidget);
+      expect(find.text('Carico (limite: Resistenza)'), findsOneWidget);
+      expect(find.text('0/3'), findsNWidgets(2));
+
+      await _aggiungi(tester, 'Aggiungi chip neurale', pesante.nome);
+      expect(find.text('2/3'), findsOneWidget);
+
+      await _tocca(tester, find.byTooltip('Disinstalla ${pesante.nome}'));
+      expect(find.text('0/3'), findsNWidgets(2));
+    });
+
+    testWidgets('nella modale quello che non entra è spento, col motivo', (
       tester,
     ) async {
-      await _apriPunk(tester);
-      expect(find.text('0/5'), findsOneWidget);
+      final salvate = await _apriPunk(
+        tester,
+        impianti: Impianti(chipNeurali: [pesante]),
+      );
+      await _tocca(
+        tester,
+        find.widgetWithText(OutlinedButton, 'Aggiungi chip neurale'),
+      );
 
-      await _aggiungi(tester, 'Aggiungi chip neurale', _chip.nome);
-      await _aggiungi(tester, 'Aggiungi protesi', _sostitutivo.nome);
-      expect(find.text('2/5'), findsOneWidget);
+      // Quelli da 2 non entrano nel punto rimasto: niente "Aggiungi",
+      // al suo posto il motivo.
+      expect(find.byTooltip('Aggiungi ${pesante.nome}'), findsNothing);
+      expect(find.text('Carico 2, liberi 1'), findsWidgets);
 
-      await _tocca(tester, find.byTooltip('Disinstalla ${_chip.nome}'));
-      expect(find.text('1/5'), findsOneWidget);
+      // Uno da 1 invece entra.
+      await _tocca(tester, find.byTooltip('Aggiungi ${leggero.nome}'));
+      expect(salvate.last.impianti.caricoChip, 3);
     });
 
-    testWidgets('a 5/5 non si installa più niente', (tester) async {
-      await _apriPunk(tester, impianti: installati(5));
+    testWidgets('oltre il limite il Carico è rosso e lo dice', (tester) async {
+      // Il limite può scendere dopo: qui Volontà 3 con 4 di Carico.
+      await _apriPunk(
+        tester,
+        impianti: Impianti(chipNeurali: [pesante, pesante]),
+      );
 
-      expect(find.text('5/5'), findsOneWidget);
-      expect(find.textContaining('Limite raggiunto'), findsOneWidget);
-      for (final pulsante in ['Aggiungi chip neurale', 'Aggiungi protesi']) {
-        final bottone = tester.widget<OutlinedButton>(
-          find.widgetWithText(OutlinedButton, pulsante),
-        );
-        expect(bottone.onPressed, isNull, reason: pulsante);
-      }
+      expect(find.text('4/3'), findsOneWidget);
+      expect(find.textContaining('Oltre il limite'), findsOneWidget);
     });
   });
 
@@ -636,19 +748,31 @@ void main() {
       expect(find.byTooltip('Installa $oggetto'), findsNothing);
     });
 
-    testWidgets('a 5/5 dagli Oggetti non si installa', (tester) async {
+    testWidgets('dagli Oggetti non si installa quello che non entra', (
+      tester,
+    ) async {
+      // Resistenza 3, già occupata da una protesi di Carico 2: una da 2
+      // non entra più.
+      final altra = listaProtesi.firstWhere(
+        (p) => p.carico == 2 && p.nome != _sostitutivo.nome,
+      );
       await _apriPunk(
         tester,
-        impianti: Impianti(chipNeurali: List.filled(5, _chip)),
-        oggetti: [_sostitutivo.nome],
+        impianti: Impianti(protesi: [_sostitutivo]),
+        oggetti: [altra.nome],
       );
       await vaiAllaPagina(tester, 'Oggetti');
 
-      final installa = find.ancestor(
-        of: find.byTooltip('Installa ${_sostitutivo.nome}'),
-        matching: find.byType(IconButton),
+      final installa = find.byTooltip('Carico 2, liberi 1');
+      expect(installa, findsOneWidget);
+      expect(
+        tester
+            .widget<IconButton>(
+              find.ancestor(of: installa, matching: find.byType(IconButton)),
+            )
+            .onPressed,
+        isNull,
       );
-      expect(tester.widget<IconButton>(installa.first).onPressed, isNull);
     });
   });
 
@@ -717,8 +841,8 @@ void main() {
         expect(p.tag, contains(tag));
       }
       // ...e i suoi Modificatori.
-      final m = capacita.modificatoreAbilita!;
-      expect(bonusDi(p, m.nome), greaterThanOrEqualTo(m.valore));
+      final m = _di(capacita.modificatori, CategoriaBersaglio.abilita)!;
+      expect(bonusDi(p, m.bersaglio.label), greaterThanOrEqualTo(m.valore));
       // Ma non diventa una Capacità del personaggio: è dell'impianto.
       expect(p.capacita.map((c) => c.nome), isNot(contains(capacita.nome)));
 
@@ -739,8 +863,8 @@ void main() {
 
       await _tocca(tester, find.byTooltip('Disinstalla ${concedente.nome}'));
 
-      final m = capacita.modificatoreAbilita!;
-      expect(bonusDi(salvate.last.personaggio, m.nome), 0);
+      final m = _di(capacita.modificatori, CategoriaBersaglio.abilita)!;
+      expect(bonusDi(salvate.last.personaggio, m.bersaglio.label), 0);
       await vaiAllaPagina(tester, 'Capacità');
       expect(find.text('Da Impianto'), findsNothing);
       expect(find.text(capacita.nome), findsNothing);

@@ -14,7 +14,6 @@ Scheda _$SchedaFromJson(Map<String, dynamic> json) => Scheda(
       (json['keyword'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
   iraAttuale: (json['iraAttuale'] as num?)?.toInt() ?? Scheda.iraIniziale,
-  velocitaBonus: (json['velocitaBonus'] as num?)?.toInt() ?? 0,
   ferite: json['ferite'] == null
       ? const Ferite()
       : Ferite.fromJson(json['ferite'] as Map<String, dynamic>),
@@ -36,7 +35,6 @@ Map<String, dynamic> _$SchedaToJson(Scheda instance) => <String, dynamic>{
   'personaggio': instance.personaggio.toJson(),
   'keyword': instance.keyword,
   'iraAttuale': instance.iraAttuale,
-  'velocitaBonus': instance.velocitaBonus,
   'ferite': instance.ferite.toJson(),
   'equipaggiamento': instance.equipaggiamento.toJson(),
   'impianti': instance.impianti.toJson(),

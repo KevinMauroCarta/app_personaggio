@@ -30,17 +30,15 @@ class Impianti {
   final List<ChipNeurale> chipNeurali;
   final List<Protesi> protesi;
 
-  /// Quanti impianti, fra chip e protesi, si possono avere installati
-  /// insieme. Valore provvisorio, in attesa del regolamento.
-  static const int massimo = 5;
-
   const Impianti({this.chipNeurali = const [], this.protesi = const []});
 
-  /// Quanti impianti sono installati, chip e protesi insieme.
-  int get totale => chipNeurali.length + protesi.length;
+  /// Il Carico dei chip installati, sommato: non può superare la Volontà
+  /// (Scheda.limiteCaricoChip).
+  int get caricoChip => chipNeurali.fold(0, (somma, c) => somma + c.carico);
 
-  /// True se non c'è posto per un altro impianto.
-  bool get pieno => totale >= massimo;
+  /// Il Carico delle protesi installate, sommato: non può superare la
+  /// Resistenza (Scheda.limiteCaricoProtesi).
+  int get caricoProtesi => protesi.fold(0, (somma, p) => somma + p.carico);
 
   /// Le Capacità da Impianto concesse dagli impianti installati, una per
   /// impianto che ne dà una. Due impianti con la stessa capacità la danno

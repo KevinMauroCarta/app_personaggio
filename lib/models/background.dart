@@ -14,16 +14,18 @@ class Background {
   /// La Capacità di Background legata a questo background: ogni
   /// background ne ha una e una sola.
   final Capacita capacitaDiBackground;
-  final Modificatore? modificatoreCaratteristica;
-  final Modificatore? modificatoreAbilita;
+
+  /// I Modificatori che porta: su Caratteristiche, Abilità o valori della
+  /// Scheda (Modello/Modificatore).
+  @JsonKey(readValue: leggiModificatori)
+  final List<Modificatore> modificatori;
   final String tag;
 
   const Background({
     required this.nome,
     required this.descrizione,
     required this.capacitaDiBackground,
-    this.modificatoreCaratteristica,
-    this.modificatoreAbilita,
+    this.modificatori = const [],
     required this.tag,
   });
 

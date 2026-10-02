@@ -1,3 +1,4 @@
+import '../enums/bersaglio.dart';
 import '../models/abilita_personaggio.dart';
 import '../models/background.dart';
 import '../models/capacita.dart';
@@ -23,64 +24,85 @@ import '../models/talento.dart';
 /// fa sì che togliere una capacità ne rimuova anche bonus e tag senza
 /// nessun lavoro aggiuntivo.
 
-/// Somma i [modificatori] che puntano a [nome], ignorando gli altri e
-/// quelli assenti.
-int _sommaPer(String nome, Iterable<Modificatore?> modificatori) {
+/// Tutti i Modificatori in vigore: quelli delle [capacita] possedute, del
+/// [background], delle [mutazioni] e degli [impianti] installati, con le
+/// Capacità da Impianto che concedono.
+///
+/// Vanno passate tutte insieme, perché i bonus si ricalcolano sempre da
+/// zero: è così che togliendo una capacità (o una mutazione, o un
+/// impianto) sparisce anche il suo bonus, senza doverlo scalare a mano.
+///
+/// ATTENZIONE: i Talenti non compaiono qui perché Modello/Talento non ha
+/// Modificatori - il suo Effetto è solo testo. Un talento che dice
+/// "Iniziativa +2" quindi non alza niente da solo.
+List<Modificatore> modificatoriAttivi({
+  required List<Capacita> capacita,
+  Background? background,
+  List<Mutazione> mutazioni = const [],
+  Impianti impianti = const Impianti(),
+}) => [
+  for (final c in capacita) ...c.modificatori,
+  ...?background?.modificatori,
+  for (final m in mutazioni) ...m.modificatori,
+  for (final c in impianti.chipNeurali) ...c.modificatori,
+  for (final p in impianti.protesi) ...p.modificatori,
+  for (final c in impianti.capacita) ...c.modificatori,
+];
+
+/// Quanto i [modificatori] cambiano [bersaglio]: la somma dei loro
+/// valori, negativi compresi.
+int sommaModificatori(
+  Iterable<Modificatore> modificatori,
+  Bersaglio bersaglio,
+) {
   var totale = 0;
   for (final m in modificatori) {
-    if (m != null && m.nome == nome) totale += m.valore;
+    if (m.bersaglio == bersaglio) totale += m.valore;
   }
   return totale;
 }
 
-/// Valore Bonus della Caratteristica di nome [nome]: la somma di tutti i
-/// Modificatori che la toccano.
-///
-/// Le sorgenti sono tutte quelle che in Modello/* hanno un campo
-/// Modificatore: le [capacita] possedute, il [background], le
-/// [mutazioni] e gli [impianti] installati, con le Capacità da Impianto
-/// che concedono. Vanno passate tutte insieme, perché il bonus si
-/// ricalcola sempre da zero: è così che togliendo una capacità (o una
-/// mutazione, o un impianto) sparisce anche il suo bonus, senza doverlo
-/// scalare a mano.
-///
-/// ATTENZIONE: i Talenti non compaiono qui perché Modello/Talento non ha
-/// campi Modificatore - il suo Effetto è solo testo. Un talento che dice
-/// "Iniziativa +2" quindi non alza niente da solo.
+/// Il Valore Bonus della Caratteristica o dell'Abilità di nome [nome]:
+/// la somma dei Modificatori che la toccano.
+int _bonusPerNome(String nome, List<Modificatore> modificatori) {
+  final bersaglio = Bersaglio.daLabel(nome);
+  return bersaglio == null ? 0 : sommaModificatori(modificatori, bersaglio);
+}
+
+/// Valore Bonus della Caratteristica di nome [nome]. Le sorgenti sono
+/// quelle di [modificatoriAttivi].
 int bonusCaratteristica(
   String nome, {
   required List<Capacita> capacita,
   Background? background,
   List<Mutazione> mutazioni = const [],
   Impianti impianti = const Impianti(),
-}) {
-  return _sommaPer(nome, [
-    for (final c in capacita) c.modificatoreCaratteristica,
-    background?.modificatoreCaratteristica,
-    for (final m in mutazioni) m.modificatoreCaratteristica,
-    for (final c in impianti.chipNeurali) c.modificatoreCaratteristica,
-    for (final p in impianti.protesi) p.modificatoreCaratteristica,
-    for (final c in impianti.capacita) c.modificatoreCaratteristica,
-  ]);
-}
+}) => _bonusPerNome(
+  nome,
+  modificatoriAttivi(
+    capacita: capacita,
+    background: background,
+    mutazioni: mutazioni,
+    impianti: impianti,
+  ),
+);
 
-/// Valore Bonus dell'Abilità di nome [nome]. Vedi
-/// [bonusCaratteristica]: stesse regole, ma le Mutazioni non entrano
-/// perché Modello/Mutazione ha il solo Modificatore di Caratteristica.
+/// Valore Bonus dell'Abilità di nome [nome]. Vedi [bonusCaratteristica].
 int bonusAbilita(
   String nome, {
   required List<Capacita> capacita,
   Background? background,
+  List<Mutazione> mutazioni = const [],
   Impianti impianti = const Impianti(),
-}) {
-  return _sommaPer(nome, [
-    for (final c in capacita) c.modificatoreAbilita,
-    background?.modificatoreAbilita,
-    for (final c in impianti.chipNeurali) c.modificatoreAbilita,
-    for (final p in impianti.protesi) p.modificatoreAbilita,
-    for (final c in impianti.capacita) c.modificatoreAbilita,
-  ]);
-}
+}) => _bonusPerNome(
+  nome,
+  modificatoriAttivi(
+    capacita: capacita,
+    background: background,
+    mutazioni: mutazioni,
+    impianti: impianti,
+  ),
+);
 
 /// [p] con il Valore Bonus di Caratteristiche e Abilità ricalcolato da
 /// tutto quello che porta un Modificatore: Capacità, Background e
@@ -132,6 +154,7 @@ Personaggio conEffettiRicalcolati(
             a.abilita.nome,
             capacita: p.capacita,
             background: p.background,
+            mutazioni: p.mutazioni,
             impianti: impianti,
           ),
         ),

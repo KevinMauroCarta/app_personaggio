@@ -1,4 +1,5 @@
 import '../models/mutazione.dart';
+import '../enums/bersaglio.dart';
 import '../models/modificatore.dart';
 
 /// Lista/Mutazioni + Regolamento/Mutazioni
@@ -11,7 +12,7 @@ const List<Mutazione> listaMutazioni = [
     effetto:
         '+1 ai test di percezione e capacità di individuare presenze '
         'occulte.',
-    modificatoreCaratteristica: Modificatore(nome: 'Iniziativa', valore: 1),
+    modificatori: [Modificatore(bersaglio: Bersaglio.iniziativa, valore: 1)],
   ),
   Mutazione(
     nome: 'Braccio Artigliato',
@@ -21,7 +22,7 @@ const List<Mutazione> listaMutazioni = [
     effetto:
         '+1 ai danni corpo a corpo e possibilità di ignorare armature '
         'leggere.',
-    modificatoreCaratteristica: Modificatore(nome: 'Forza', valore: 1),
+    modificatori: [Modificatore(bersaglio: Bersaglio.forza, valore: 1)],
   ),
   Mutazione(
     nome: 'Pelle Chitinosa',
@@ -31,7 +32,7 @@ const List<Mutazione> listaMutazioni = [
     effetto:
         '+1 alla resistenza fisica e riduzione del danno subito da armi '
         'leggere.',
-    modificatoreCaratteristica: Modificatore(nome: 'Resistenza', valore: 1),
+    modificatori: [Modificatore(bersaglio: Bersaglio.resistenza, valore: 1)],
   ),
   Mutazione(
     nome: 'Sangue Corrosivo',
@@ -50,6 +51,6 @@ const List<Mutazione> listaMutazioni = [
     effetto:
         '+1 ai test sociali intimidatori e possibilità di spaventare '
         'creature deboli.',
-    modificatoreCaratteristica: Modificatore(nome: 'Socialità', valore: 1),
+    modificatori: [Modificatore(bersaglio: Bersaglio.socialita, valore: 1)],
   ),
 ];

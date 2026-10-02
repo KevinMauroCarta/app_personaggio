@@ -12,7 +12,6 @@ import '../../models/armi/arma.dart';
 import '../../models/armi/arma_distanza.dart';
 import '../../models/armatura.dart';
 import '../../models/chip_neurale.dart';
-import '../../models/modificatore.dart';
 import '../../models/protesi.dart';
 import '../../models/tratto.dart';
 
@@ -136,17 +135,18 @@ int? valoreDi(String nome) =>
     _chipPerNome[nome]?.valore ??
     _protesiPerNome[nome]?.valore;
 
+/// Il Carico di [nome], se è un chip o una protesi (vedi
+/// Scheda.limiteCaricoChip e Scheda.limiteCaricoProtesi); null per il
+/// resto.
+int? caricoDi(String nome) =>
+    _chipPerNome[nome]?.carico ?? _protesiPerNome[nome]?.carico;
+
 /// I Modificatori di [nome] come si leggono ("Forza +1"), se è un chip
 /// o una protesi; null per il resto, che di Modificatori non ne ha.
 List<String>? modificatoriDi(String nome) =>
     (_chipPerNome[nome]?.modificatori ?? _protesiPerNome[nome]?.modificatori)
-        ?.map(testoModificatore)
+        ?.map((m) => m.testo)
         .toList();
-
-/// Un Modificatore con il segno esplicito, come sulla scheda cartacea:
-/// "Forza +1", "Mira -2".
-String testoModificatore(Modificatore m) =>
-    '${m.nome} ${m.valore >= 0 ? '+' : ''}${m.valore}';
 
 /// Ordina due nomi ignorando maiuscole e minuscole, come se li
 /// guardasse un lettore e non il codice dei caratteri.
@@ -218,6 +218,7 @@ Map<String, String> datiOggetto(String nome) {
       'Effetto': chip.effetto,
       'Modificatori': _elenco(modificatoriDi(nome)!),
       'Capacità': chip.capacita?.nome ?? '-',
+      'Carico': '${chip.carico}',
       'Valore': '${chip.valore}',
       'Rarità': chip.rarita.label,
     };
@@ -232,6 +233,7 @@ Map<String, String> datiOggetto(String nome) {
       'Effetto': protesi.effetto,
       'Modificatori': _elenco(modificatoriDi(nome)!),
       'Capacità': protesi.capacita?.nome ?? '-',
+      'Carico': '${protesi.carico}',
       'Valore': '${protesi.valore}',
       'Rarità': protesi.rarita.label,
     };

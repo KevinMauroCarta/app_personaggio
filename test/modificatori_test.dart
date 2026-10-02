@@ -1,18 +1,19 @@
-// Tutto ciò che porta un Modificatore deve finire nel Valore Bonus della
-// Caratteristica o dell'Abilità indicata: le Capacità, il Background e le
-// Mutazioni. Il Valore Bonus è sempre ricalcolato da zero dall'elenco
-// completo di ciò che il personaggio ha, così togliere una di queste cose
-// ne toglie anche il bonus.
+// Tutto ciò che porta Modificatori - Capacità, Background, Mutazioni,
+// Impianti - cambia il valore che ciascuno prende come bersaglio: una
+// Caratteristica o un'Abilità (nel loro Valore Bonus) o un valore della
+// Scheda (Ferite Massime, Velocità, Difesa...). I bonus sono sempre
+// ricalcolati da zero dall'elenco completo di ciò che il personaggio ha,
+// così togliere una di queste cose ne toglie anche il bonus.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_personaggio/data/lista_abilita.dart';
-import 'package:app_personaggio/data/lista_background.dart';
 import 'package:app_personaggio/data/lista_caratteristiche.dart';
 import 'package:app_personaggio/data/lista_mutazioni.dart';
 import 'package:app_personaggio/data/lista_razze.dart';
 import 'package:app_personaggio/data/lista_sistemi.dart';
+import 'package:app_personaggio/enums/bersaglio.dart';
 import 'package:app_personaggio/enums/genere.dart';
 import 'package:app_personaggio/enums/tipo_capacita.dart';
 import 'package:app_personaggio/models/abilita_personaggio.dart';
@@ -28,61 +29,123 @@ import 'package:app_personaggio/services/effetti_personaggio.dart';
 
 import 'linguette_scheda.dart';
 
-Capacita _capacita({
+Modificatore _m(Bersaglio bersaglio, int valore) =>
+    Modificatore(bersaglio: bersaglio, valore: valore);
+
+Capacita _capacita(
+  List<Modificatore> modificatori, {
   String nome = 'Capacità',
-  Modificatore? caratteristica,
-  Modificatore? abilita,
 }) => Capacita(
   nome: nome,
   tipo: TipoCapacita.generica,
   descrizione: '',
   effetto: '',
-  modificatoreCaratteristica: caratteristica,
-  modificatoreAbilita: abilita,
+  modificatori: modificatori,
   costo: 2,
   tag: const [],
 );
 
-Background _background({Modificatore? caratteristica, Modificatore? abilita}) =>
+Background _background([List<Modificatore> modificatori = const []]) =>
     Background(
       nome: 'Background',
       descrizione: '',
-      capacitaDiBackground: _capacita(nome: 'Capacità di Background'),
-      modificatoreCaratteristica: caratteristica,
-      modificatoreAbilita: abilita,
+      capacitaDiBackground: _capacita(const [], nome: 'Di Background'),
+      modificatori: modificatori,
       tag: 'Militare',
     );
 
-Mutazione _mutazione(Modificatore? caratteristica) => Mutazione(
+Mutazione _mutazione(List<Modificatore> modificatori) => Mutazione(
   nome: 'Mutazione',
   descrizione: '',
   effetto: '',
-  modificatoreCaratteristica: caratteristica,
+  modificatori: modificatori,
 );
 
+/// Una Scheda con tutte le Caratteristiche a [base] e tutte le Abilità a
+/// 1, più le [capacita] e le [mutazioni] indicate.
+Scheda _scheda({
+  int base = 3,
+  List<Capacita> capacita = const [],
+  List<Mutazione> mutazioni = const [],
+  int furtivitaPassiva = 0,
+}) {
+  final sistema = listaSistemi.first;
+  return Scheda(
+    personaggio: Personaggio(
+      nome: 'Kaleb',
+      anni: 30,
+      genere: Genere.maschio,
+      razza: listaRazze.first,
+      sistemaDiOrigine: sistema,
+      pianetaDiOrigine: sistema.pianeti.first,
+      background: _background(),
+      caratteristiche: [
+        for (final c in listaCaratteristiche)
+          CaratteristicaPersonaggio(caratteristica: c, valoreBase: base),
+      ],
+      // Tutte le abilità: la Scheda calcola la Percezione Passiva e si
+      // aspetta di trovarle.
+      abilita: [
+        for (final a in listaAbilita)
+          AbilitaPersonaggio(abilita: a, valoreBase: 1),
+      ],
+      capacita: capacita,
+      mutazioni: mutazioni,
+    ),
+    furtivitaPassiva: furtivitaPassiva,
+  );
+}
+
 void main() {
+  test('il catalogo dei Bersagli è quello di Caratteristiche e Abilità', () {
+    // Il Modificatore trova la riga da alzare per nome: se i due elenchi
+    // si scostassero, un bonus finirebbe nel vuoto.
+    List<String> diCategoria(CategoriaBersaglio categoria) => [
+      for (final b in Bersaglio.values)
+        if (b.categoria == categoria) b.label,
+    ];
+
+    expect(
+      diCategoria(CategoriaBersaglio.caratteristica),
+      unorderedEquals(listaCaratteristiche.map((c) => c.nome)),
+    );
+    expect(
+      diCategoria(CategoriaBersaglio.abilita),
+      unorderedEquals(listaAbilita.map((a) => a.nome)),
+    );
+  });
+
   test('i modificatori delle Capacità alimentano il Valore Bonus', () {
     final capacita = [
-      _capacita(
-        nome: 'Impeto',
-        caratteristica: const Modificatore(nome: 'Forza', valore: 1),
-      ),
-      _capacita(
-        nome: 'Vista Acuta',
-        caratteristica: const Modificatore(nome: 'Forza', valore: 2),
-        abilita: const Modificatore(nome: 'Percezione', valore: 1),
-      ),
+      _capacita([_m(Bersaglio.forza, 1)]),
+      _capacita([_m(Bersaglio.forza, 2), _m(Bersaglio.percezione, 1)]),
     ];
 
     expect(bonusCaratteristica('Forza', capacita: capacita), 3);
     expect(bonusAbilita('Percezione', capacita: capacita), 1);
   });
 
+  test('una sola sorgente può portare quanti modificatori vuole', () {
+    final capacita = [
+      _capacita([
+        _m(Bersaglio.forza, 1),
+        _m(Bersaglio.agilita, 2),
+        _m(Bersaglio.mira, 1),
+        _m(Bersaglio.tempra, -1),
+      ]),
+    ];
+
+    expect(bonusCaratteristica('Forza', capacita: capacita), 1);
+    expect(bonusCaratteristica('Agilità', capacita: capacita), 2);
+    expect(bonusAbilita('Mira', capacita: capacita), 1);
+    expect(bonusAbilita('Tempra', capacita: capacita), -1);
+  });
+
   test('anche i modificatori del Background contano', () {
-    final background = _background(
-      caratteristica: const Modificatore(nome: 'Socialità', valore: 1),
-      abilita: const Modificatore(nome: 'Persuasione', valore: 2),
-    );
+    final background = _background([
+      _m(Bersaglio.socialita, 1),
+      _m(Bersaglio.persuasione, 2),
+    ]);
 
     expect(
       bonusCaratteristica(
@@ -98,16 +161,20 @@ void main() {
     );
   });
 
-  test('anche i modificatori delle Mutazioni contano', () {
+  test('le Mutazioni possono toccare anche le Abilità', () {
     final mutazioni = [
-      _mutazione(const Modificatore(nome: 'Forza', valore: 1)),
-      _mutazione(const Modificatore(nome: 'Forza', valore: 2)),
-      _mutazione(null),
+      _mutazione([_m(Bersaglio.forza, 1)]),
+      _mutazione([_m(Bersaglio.forza, 2), _m(Bersaglio.intimidazione, 1)]),
+      _mutazione(const []),
     ];
 
     expect(
       bonusCaratteristica('Forza', capacita: const [], mutazioni: mutazioni),
       3,
+    );
+    expect(
+      bonusAbilita('Intimidazione', capacita: const [], mutazioni: mutazioni),
+      1,
     );
   });
 
@@ -115,12 +182,12 @@ void main() {
     final bonus = bonusCaratteristica(
       'Forza',
       capacita: [
-        _capacita(caratteristica: const Modificatore(nome: 'Forza', valore: 1)),
+        _capacita([_m(Bersaglio.forza, 1)]),
       ],
-      background: _background(
-        caratteristica: const Modificatore(nome: 'Forza', valore: 2),
-      ),
-      mutazioni: [_mutazione(const Modificatore(nome: 'Forza', valore: 4))],
+      background: _background([_m(Bersaglio.forza, 2)]),
+      mutazioni: [
+        _mutazione([_m(Bersaglio.forza, 4)]),
+      ],
     );
 
     expect(bonus, 7);
@@ -131,12 +198,12 @@ void main() {
       bonusCaratteristica(
         'Volontà',
         capacita: [
-          _capacita(
-            caratteristica: const Modificatore(nome: 'Forza', valore: 3),
-          ),
+          _capacita([_m(Bersaglio.forza, 3)]),
         ],
         background: _background(),
-        mutazioni: [_mutazione(const Modificatore(nome: 'Agilità', valore: 2))],
+        mutazioni: [
+          _mutazione([_m(Bersaglio.agilita, 2)]),
+        ],
       ),
       0,
     );
@@ -148,7 +215,7 @@ void main() {
         'Agilità',
         capacita: const [],
         mutazioni: [
-          _mutazione(const Modificatore(nome: 'Agilità', valore: -2)),
+          _mutazione([_m(Bersaglio.agilita, -2)]),
         ],
       ),
       -2,
@@ -160,41 +227,149 @@ void main() {
     expect(bonusAbilita('Percezione', capacita: const []), 0);
   });
 
+  group('valori della Scheda', () {
+    test('ogni valore somma alla formula i suoi modificatori', () {
+      final senza = _scheda();
+      final con = _scheda(
+        capacita: [
+          _capacita([
+            _m(Bersaglio.ferite, 2),
+            _m(Bersaglio.shock, 1),
+            _m(Bersaglio.difesa, 1),
+            _m(Bersaglio.resilienza, 1),
+            _m(Bersaglio.grinta, 1),
+            _m(Bersaglio.fermezza, 1),
+            _m(Bersaglio.risolutezza, 1),
+            _m(Bersaglio.influenza, 1),
+            _m(Bersaglio.percezionePassiva, 1),
+          ]),
+        ],
+      );
+
+      expect(con.feriteMassime, senza.feriteMassime + 2);
+      expect(con.shockMassimo, senza.shockMassimo + 1);
+      expect(con.difesaBase, senza.difesaBase + 1);
+      // La Resilienza Base entra in quella Fisica e in quella Energetica.
+      expect(con.resilienzaFisica, senza.resilienzaFisica + 1);
+      expect(con.resilienzaEnergetica, senza.resilienzaEnergetica + 1);
+      expect(con.grinta, senza.grinta + 1);
+      expect(con.fermezza, senza.fermezza + 1);
+      expect(con.risolutezza, senza.risolutezza + 1);
+      expect(con.influenza, senza.influenza + 1);
+      expect(con.percezionePassiva, senza.percezionePassiva + 1);
+    });
+
+    test('Velocità, Ferite e Riserva Furtiva prendono i loro bonus', () {
+      final scheda = _scheda(
+        furtivitaPassiva: 4,
+        mutazioni: [
+          _mutazione([
+            _m(Bersaglio.velocita, -1),
+            _m(Bersaglio.ferite, 1),
+            _m(Bersaglio.riservaFurtiva, 2),
+          ]),
+        ],
+      );
+
+      expect(scheda.velocitaBonus, -1);
+      expect(scheda.velocitaTotale, 6 - 1);
+      // Ferite Massime = Resistenza (3) + bonus.
+      expect(scheda.feriteMassime, 3 + 1);
+      // La Riserva Furtiva è scritta a mano: il bonus si somma a quella.
+      expect(scheda.riservaFurtivaTotale, 4 + 2);
+    });
+
+    test('Resilienza Fisica ed Energetica hanno bonus separati', () {
+      final senza = _scheda();
+      final con = _scheda(
+        capacita: [
+          _capacita([
+            _m(Bersaglio.resilienzaFisica, -1),
+            _m(Bersaglio.resilienzaEnergetica, 2),
+          ]),
+        ],
+      );
+
+      expect(con.resilienzaFisica, senza.resilienzaFisica - 1);
+      expect(con.resilienzaEnergetica, senza.resilienzaEnergetica + 2);
+    });
+
+    test('un modificatore di Caratteristica non tocca i valori di Scheda', () {
+      // Forza non entra in nessuna formula di Scheda: alzarla non deve
+      // cambiare Ferite o Velocità.
+      final senza = _scheda();
+      final con = _scheda(
+        capacita: [
+          _capacita([_m(Bersaglio.forza, 5)]),
+        ],
+      );
+
+      expect(con.feriteMassime, senza.feriteMassime);
+      expect(con.velocitaTotale, senza.velocitaTotale);
+    });
+  });
+
+  group('salvataggi di prima', () {
+    test('un Modificatore col solo nome diventa il suo Bersaglio', () {
+      final m = Modificatore.fromJson({'nome': 'Mischia Leggera', 'valore': 2});
+      expect(m.bersaglio, Bersaglio.mischiaLeggera);
+      expect(m.valore, 2);
+    });
+
+    test('i vecchi campi singoli diventano la lista di modificatori', () {
+      final vecchia = {
+        'nome': 'Vista Acuta',
+        'tipo': 'razza',
+        'descrizione': '',
+        'effetto': '',
+        'modificatoreCaratteristica': {'nome': 'Intelletto', 'valore': 1},
+        'modificatoreAbilita': {'nome': 'Percezione', 'valore': 1},
+        'costo': 0,
+        'tag': <String>[],
+      };
+
+      final capacita = Capacita.fromJson(vecchia);
+      expect(capacita.modificatori.map((m) => m.testo), [
+        'Intelletto +1',
+        'Percezione +1',
+      ]);
+
+      // E risalvata usa la forma nuova, che si rilegge uguale.
+      final riletta = Capacita.fromJson(capacita.toJson());
+      expect(riletta.modificatori.map((m) => m.testo), [
+        'Intelletto +1',
+        'Percezione +1',
+      ]);
+    });
+
+    test('una Mutazione salvata senza modificatori ne ha zero', () {
+      final mutazione = Mutazione.fromJson({
+        'nome': 'Mutazione',
+        'descrizione': '',
+        'effetto': '',
+        'modificatoreCaratteristica': null,
+      });
+      expect(mutazione.modificatori, isEmpty);
+    });
+  });
+
   testWidgets('in Scheda il bonus della Mutazione arriva alla Caratteristica', (
     tester,
   ) async {
     // Le Mutazioni si prendono dalla Scheda, quindi è lì che il loro
     // Modificatore deve farsi vedere.
     final mutazione = listaMutazioni.firstWhere(
-      (m) => m.modificatoreCaratteristica != null,
-    );
-    final nomeCaratteristica = mutazione.modificatoreCaratteristica!.nome;
-    final valore = mutazione.modificatoreCaratteristica!.valore;
-
-    final sistema = listaSistemi.first;
-    final scheda = Scheda(
-      personaggio: Personaggio(
-        nome: 'Kaleb',
-        anni: 30,
-        genere: Genere.maschio,
-        razza: listaRazze.first,
-        sistemaDiOrigine: sistema,
-        pianetaDiOrigine: sistema.pianeti.first,
-        background: listaBackground.first,
-        caratteristiche: listaCaratteristiche
-            .map(
-              (c) =>
-                  CaratteristicaPersonaggio(caratteristica: c, valoreBase: 3),
-            )
-            .toList(),
-        // Tutte le abilità: la Scheda calcola la Percezione Passiva e si
-        // aspetta di trovarle.
-        abilita: listaAbilita
-            .map((a) => AbilitaPersonaggio(abilita: a, valoreBase: 1))
-            .toList(),
-        mutazioni: [mutazione],
+      (m) => m.modificatori.any(
+        (x) => x.bersaglio.categoria == CategoriaBersaglio.caratteristica,
       ),
     );
+    final modificatore = mutazione.modificatori.firstWhere(
+      (x) => x.bersaglio.categoria == CategoriaBersaglio.caratteristica,
+    );
+    final nomeCaratteristica = modificatore.bersaglio.label;
+    final valore = modificatore.valore;
+
+    final scheda = _scheda(mutazioni: [mutazione]);
 
     await tester.pumpWidget(
       MaterialApp(

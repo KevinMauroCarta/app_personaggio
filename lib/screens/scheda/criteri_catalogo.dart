@@ -267,6 +267,7 @@ final criterioPAEnergia = CriterioNumero(
   (n) => armaturaDaNome(n)?.paEnergia,
 );
 final criterioValore = CriterioNumero('Valore', valoreDi);
+final criterioCarico = CriterioNumero('Carico', caricoDi);
 
 /// I criteri della scelta delle Armi, nell'ordine in cui la modale ne
 /// mostra i dati. Il primo è quello di partenza, sia per cercare sia
@@ -319,6 +320,7 @@ final List<CriterioCatalogo> criteriOggetti = [
   criterioEffetto,
   criterioModificatori,
   criterioCapacita,
+  criterioCarico,
   criterioValore,
   criterioRarita,
   criterioTratti,
@@ -333,6 +335,7 @@ final List<CriterioCatalogo> criteriChipNeurali = [
   criterioEffetto,
   criterioModificatori,
   criterioCapacita,
+  criterioCarico,
   criterioValore,
   criterioRarita,
 ];
@@ -346,6 +349,7 @@ final List<CriterioCatalogo> criteriProtesi = [
   criterioEffetto,
   criterioModificatori,
   criterioCapacita,
+  criterioCarico,
   criterioValore,
   criterioRarita,
 ];

@@ -2,6 +2,7 @@ import '../enums/parte_corpo.dart';
 import '../enums/rarita.dart';
 import 'lista_capacita.dart';
 import '../enums/tipo_protesi.dart';
+import '../enums/bersaglio.dart';
 import '../models/modificatore.dart';
 import '../models/protesi.dart';
 
@@ -33,6 +34,7 @@ final List<Protesi> listaProtesi = [
     effetto:
         'Sostituisce un braccio perduto: il personaggio lo usa come '
         'quello che aveva.',
+    carico: 2,
     valore: 30,
     rarita: Rarita.comune,
   ),
@@ -47,6 +49,7 @@ final List<Protesi> listaProtesi = [
         'Sostituisce un occhio perduto e annulla le penalità di vista '
         'dovute alla sua mancanza. Concede la Capacità Visione Notturna.',
     capacita: capacitaDaNome('Visione Notturna'),
+    carico: 2,
     valore: 25,
     rarita: Rarita.comune,
   ),
@@ -60,6 +63,7 @@ final List<Protesi> listaProtesi = [
     effetto:
         'Tiene in vita un personaggio che ha perso il cuore. La batteria '
         'va ricaricata una volta al mese.',
+    carico: 3,
     valore: 60,
     rarita: Rarita.rara,
   ),
@@ -72,8 +76,9 @@ final List<Protesi> listaProtesi = [
         'Un telaio di pistoni che segue il corpo dalla schiena alle '
         'caviglie e ne regge il peso.',
     effetto: 'Forza +1. Concede la Capacità Presa d\'Acciaio.',
-    modificatoreCaratteristica: const Modificatore(nome: 'Forza', valore: 1),
+    modificatori: const [Modificatore(bersaglio: Bersaglio.forza, valore: 1)],
     capacita: capacitaDaNome('Presa d\'Acciaio'),
+    carico: 3,
     valore: 55,
     rarita: Rarita.nonComune,
   ),
@@ -85,7 +90,10 @@ final List<Protesi> listaProtesi = [
         'Una struttura leggera fissata alla gamba, che spinge a ogni passo '
         'insieme al muscolo.',
     effetto: 'Atletica +1.',
-    modificatoreAbilita: const Modificatore(nome: 'Atletica', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.atletica, valore: 1),
+    ],
+    carico: 1,
     valore: 35,
     rarita: Rarita.comune,
   ),
@@ -97,7 +105,10 @@ final List<Protesi> listaProtesi = [
         'Un guanto di placche e giroscopi che smorza il tremore della mano '
         'nei colpi precisi.',
     effetto: 'Mischia Leggera +1.',
-    modificatoreAbilita: const Modificatore(nome: 'Mischia Leggera', valore: 1),
+    modificatori: const [
+      Modificatore(bersaglio: Bersaglio.mischiaLeggera, valore: 1),
+    ],
+    carico: 1,
     valore: 30,
     rarita: Rarita.nonComune,
   ),

@@ -6,8 +6,13 @@ import 'ferite.dart';
 import '../enums/taglia.dart';
 import 'armi/arma.dart';
 import 'equipaggiamento.dart';
+import 'chip_neurale.dart';
 import 'impianti.dart';
+import 'protesi.dart';
 import '../enums/abilita_arma.dart';
+import '../enums/bersaglio.dart';
+import '../services/effetti_personaggio.dart';
+import 'modificatore.dart';
 
 part 'scheda.g.dart';
 
@@ -21,9 +26,13 @@ part 'scheda.g.dart';
 /// Molti valori di Sopravvivenza/Obiettivo sono derivati dalle
 /// Caratteristiche del [Personaggio] tramite formule già stabilite (getter
 /// qui sotto) invece di essere memorizzati: restano solo i campi che sono
-/// davvero liberi/manuali (es. Ferite.attuali, Ferite.bonus,
-/// velocitaBonus). Le formule non ancora note (es. i bonus a Resilienza,
-/// Furtività Passiva) restano campi manuali in attesa del regolamento.
+/// davvero liberi/manuali (es. Ferite.attuali). Le formule non ancora
+/// note (es. Furtività Passiva) restano campi manuali in attesa del
+/// regolamento.
+///
+/// Ogni valore derivato somma alla sua formula il suo bonus: i
+/// Modificatori che lo prendono come bersaglio, acquisiti da capacità,
+/// background, mutazioni e impianti (vedi [bonusDaModificatori]).
 @JsonSerializable()
 class Scheda {
   final Personaggio personaggio;
@@ -35,10 +44,6 @@ class Scheda {
   final int iraAttuale;
 
   static const int iraIniziale = 2;
-
-  /// Bonus a Velocità (es. da Talenti/Capacità): Velocità Totale = 6 +
-  /// [velocitaBonus].
-  final int velocitaBonus;
 
   final Ferite ferite;
 
@@ -72,7 +77,6 @@ class Scheda {
     // Con il nome della classe davanti, perché il codice generato
     // (scheda.g.dart) copia questo valore fuori dalla classe.
     this.iraAttuale = Scheda.iraIniziale,
-    this.velocitaBonus = 0,
     this.ferite = const Ferite(),
     this.equipaggiamento = const Equipaggiamento(),
     this.impianti = const Impianti(),
@@ -82,47 +86,105 @@ class Scheda {
     this.note = const [],
   });
 
+  /// I Modificatori in vigore sul personaggio: quelli di capacità,
+  /// background, mutazioni e impianti installati.
+  List<Modificatore> get _modificatori => modificatoriAttivi(
+    capacita: personaggio.capacita,
+    background: personaggio.background,
+    mutazioni: personaggio.mutazioni,
+    impianti: impianti,
+  );
+
+  /// Quanto i Modificatori in vigore cambiano [bersaglio]. I valori qui
+  /// sotto lo sommano alla loro formula e, dove c'è, al bonus scritto a
+  /// mano (es. Ferite bonus, Velocità bonus).
+  int bonusDaModificatori(Bersaglio bersaglio) =>
+      sommaModificatori(_modificatori, bersaglio);
+
   int _valoreCaratteristica(String nome) => personaggio.caratteristiche
       .firstWhere((c) => c.caratteristica.nome == nome)
       .valoreTotale;
 
+  /// Quanto Carico di Chip Neurali regge il personaggio: la sua Volontà
+  /// (Valore Totale). I chip potenziano, ma una mente debole finisce sotto
+  /// il loro giogo.
+  ///
+  /// Nessun impianto dà bonus a Volontà o Resistenza (un test lo
+  /// verifica), quindi nessun impianto può allargare il proprio limite.
+  int get limiteCaricoChip => _valoreCaratteristica('Volontà');
+
+  /// Quanto Carico di Protesi regge il personaggio: la sua Resistenza
+  /// (Valore Totale), perché è il corpo a dover sopportare le modifiche.
+  int get limiteCaricoProtesi => _valoreCaratteristica('Resistenza');
+
+  /// True se [chip] si può installare: il suo Carico sta in quello che
+  /// resta libero. Oltre il limite non si va.
+  bool entraChip(ChipNeurale chip) =>
+      impianti.caricoChip + chip.carico <= limiteCaricoChip;
+
+  /// True se [protesi] si può installare. Vedi [entraChip].
+  bool entraProtesi(Protesi protesi) =>
+      impianti.caricoProtesi + protesi.carico <= limiteCaricoProtesi;
+
   /// Difesa Base = Iniziativa - 1.
-  int get difesaBase => _valoreCaratteristica('Iniziativa') - 1;
+  int get difesaBase =>
+      _valoreCaratteristica('Iniziativa') -
+      1 +
+      bonusDaModificatori(Bersaglio.difesa);
 
   /// Resilienza Base = Resistenza + 1.
-  int get resilienzaBase => _valoreCaratteristica('Resistenza') + 1;
+  int get resilienzaBase =>
+      _valoreCaratteristica('Resistenza') +
+      1 +
+      bonusDaModificatori(Bersaglio.resilienza);
 
   /// Resilienza Fisica = PA dell'armatura equipaggiata + Resilienza Base.
   int get resilienzaFisica =>
-      (equipaggiamento.armatura?.pa ?? 0) + resilienzaBase;
+      (equipaggiamento.armatura?.pa ?? 0) +
+      resilienzaBase +
+      bonusDaModificatori(Bersaglio.resilienzaFisica);
 
   /// Resilienza Energetica = PA Energia dell'armatura equipaggiata +
   /// Resilienza Base.
   int get resilienzaEnergetica =>
-      (equipaggiamento.armatura?.paEnergia ?? 0) + resilienzaBase;
+      (equipaggiamento.armatura?.paEnergia ?? 0) +
+      resilienzaBase +
+      bonusDaModificatori(Bersaglio.resilienzaEnergetica);
 
   int get feriteBase => ferite.base(_valoreCaratteristica('Resistenza'));
 
-  int get feriteMassime => ferite.massime(_valoreCaratteristica('Resistenza'));
+  /// Ferite Massime = Ferite Base + Modificatori.
+  int get feriteMassime => feriteBase + bonusDaModificatori(Bersaglio.ferite);
 
   /// Shock Massimo = Volontà + Resistenza.
   int get shockMassimo =>
-      _valoreCaratteristica('Volontà') + _valoreCaratteristica('Resistenza');
+      _valoreCaratteristica('Volontà') +
+      _valoreCaratteristica('Resistenza') +
+      bonusDaModificatori(Bersaglio.shock);
 
   /// Grinta = Resistenza.
-  int get grinta => _valoreCaratteristica('Resistenza');
+  int get grinta =>
+      _valoreCaratteristica('Resistenza') +
+      bonusDaModificatori(Bersaglio.grinta);
 
   /// Fermezza = Volontà.
-  int get fermezza => _valoreCaratteristica('Volontà');
+  int get fermezza =>
+      _valoreCaratteristica('Volontà') +
+      bonusDaModificatori(Bersaglio.fermezza);
 
   /// Risolutezza = Volontà - 1.
-  int get risolutezza => _valoreCaratteristica('Volontà') - 1;
+  int get risolutezza =>
+      _valoreCaratteristica('Volontà') -
+      1 +
+      bonusDaModificatori(Bersaglio.risolutezza);
 
   /// Influenza = Socialità: quanto peso ha il personaggio quando
   /// chiede qualcosa. È derivata come Grinta e Fermezza, così segue
   /// la Caratteristica invece di restare ferma a un numero scritto a
   /// mano e dimenticato lì.
-  int get influenza => _valoreCaratteristica('Socialità');
+  int get influenza =>
+      _valoreCaratteristica('Socialità') +
+      bonusDaModificatori(Bersaglio.influenza);
 
   /// La Corruzione sono due valori: i Punti, che si segnano uno alla
   /// volta, e il Grado, che da quei punti si ricava.
@@ -148,8 +210,16 @@ class Scheda {
   int get gradoCorruzione => (personaggio.corruzione ~/ puntiPerGradoCorruzione)
       .clamp(0, gradoCorruzioneMassimo);
 
+  /// Il bonus a Velocità: la somma dei Modificatori.
+  int get velocitaBonus => bonusDaModificatori(Bersaglio.velocita);
+
   /// Velocità Totale = 6 + [velocitaBonus].
   int get velocitaTotale => 6 + velocitaBonus;
+
+  /// Riserva Furtiva = il valore scritto a mano ([furtivitaPassiva]) più
+  /// i Modificatori.
+  int get riservaFurtivaTotale =>
+      furtivitaPassiva + bonusDaModificatori(Bersaglio.riservaFurtiva);
 
   /// Le Condizioni in cui si trova il personaggio: i malus e i bonus che
   /// si porta dietro in questo momento.
@@ -199,14 +269,14 @@ class Scheda {
     final percezione = personaggio.abilita.firstWhere(
       (a) => a.abilita.nome == 'Percezione',
     );
-    return (percezione.valoreBase + percezione.valoreBonus) ~/ 2;
+    return (percezione.valoreBase + percezione.valoreBonus) ~/ 2 +
+        bonusDaModificatori(Bersaglio.percezionePassiva);
   }
 
   Scheda copyWith({
     Personaggio? personaggio,
     List<String>? keyword,
     int? iraAttuale,
-    int? velocitaBonus,
     Ferite? ferite,
     Equipaggiamento? equipaggiamento,
     Impianti? impianti,
@@ -219,7 +289,6 @@ class Scheda {
       personaggio: personaggio ?? this.personaggio,
       keyword: keyword ?? this.keyword,
       iraAttuale: iraAttuale ?? this.iraAttuale,
-      velocitaBonus: velocitaBonus ?? this.velocitaBonus,
       ferite: ferite ?? this.ferite,
       equipaggiamento: equipaggiamento ?? this.equipaggiamento,
       impianti: impianti ?? this.impianti,

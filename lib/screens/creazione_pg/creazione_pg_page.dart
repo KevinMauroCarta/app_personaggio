@@ -656,6 +656,7 @@ class _CharacterCreationPageState extends State<CharacterCreationPage> {
               e.key,
               capacita: capacita,
               background: background,
+              mutazioni: mutazioni,
             ),
           ),
         )

@@ -16,6 +16,7 @@ import 'package:app_personaggio/data/lista_pianeti.dart';
 import 'package:app_personaggio/data/lista_razze.dart';
 import 'package:app_personaggio/data/lista_sistemi.dart';
 import 'package:app_personaggio/data/lista_talenti.dart';
+import 'package:app_personaggio/enums/bersaglio.dart';
 import 'package:app_personaggio/enums/tipo_capacita.dart';
 import 'package:app_personaggio/enums/tipologia_pianeta.dart';
 import 'package:app_personaggio/screens/creazione_pg/creazione_pg_dati.dart'
@@ -25,39 +26,29 @@ void main() {
   final nomiCaratteristiche = listaCaratteristiche.map((c) => c.nome).toSet();
   final nomiAbilita = listaAbilita.map((a) => a.nome).toSet();
 
-  test('ogni modificatore punta a una Caratteristica esistente', () {
+  test('ogni modificatore di Caratteristica o Abilità trova la sua riga', () {
+    // Il Bersaglio è un catalogo chiuso, ma il bonus arriva alla riga
+    // giusta per nome: Caratteristiche e Abilità devono esistere davvero.
     for (final c in listaCapacita) {
-      final m = c.modificatoreCaratteristica;
-      if (m == null) continue;
-      expect(
-        nomiCaratteristiche,
-        contains(m.nome),
-        reason: '"${c.nome}" modifica la caratteristica "${m.nome}"',
-      );
-    }
-  });
-
-  test('ogni modificatore punta a un Abilità esistente', () {
-    for (final c in listaCapacita) {
-      final m = c.modificatoreAbilita;
-      if (m == null) continue;
-      expect(
-        nomiAbilita,
-        contains(m.nome),
-        reason: '"${c.nome}" modifica l\'abilità "${m.nome}"',
-      );
+      for (final m in c.modificatori) {
+        final nomi = switch (m.bersaglio.categoria) {
+          CategoriaBersaglio.caratteristica => nomiCaratteristiche,
+          CategoriaBersaglio.abilita => nomiAbilita,
+          CategoriaBersaglio.scheda => null,
+        };
+        if (nomi == null) continue;
+        expect(nomi, contains(m.bersaglio.label), reason: c.nome);
+      }
     }
   });
 
   test('l Effetto riporta tutti i modificatori della capacità', () {
     for (final c in listaCapacita) {
-      for (final m in [c.modificatoreCaratteristica, c.modificatoreAbilita]) {
-        if (m == null) continue;
-        final atteso = '${m.nome} ${m.valore >= 0 ? '+' : ''}${m.valore}';
+      for (final m in c.modificatori) {
         expect(
           c.effetto,
-          contains(atteso),
-          reason: 'l\'effetto di "${c.nome}" non cita "$atteso"',
+          contains(m.testo),
+          reason: 'l\'effetto di "${c.nome}" non cita "${m.testo}"',
         );
       }
     }

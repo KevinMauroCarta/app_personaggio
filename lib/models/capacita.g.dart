@@ -11,16 +11,11 @@ Capacita _$CapacitaFromJson(Map<String, dynamic> json) => Capacita(
   tipo: $enumDecode(_$TipoCapacitaEnumMap, json['tipo']),
   descrizione: json['descrizione'] as String,
   effetto: json['effetto'] as String,
-  modificatoreCaratteristica: json['modificatoreCaratteristica'] == null
-      ? null
-      : Modificatore.fromJson(
-          json['modificatoreCaratteristica'] as Map<String, dynamic>,
-        ),
-  modificatoreAbilita: json['modificatoreAbilita'] == null
-      ? null
-      : Modificatore.fromJson(
-          json['modificatoreAbilita'] as Map<String, dynamic>,
-        ),
+  modificatori:
+      (leggiModificatori(json, 'modificatori') as List<dynamic>?)
+          ?.map((e) => Modificatore.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   costo: (json['costo'] as num).toInt(),
   tag: (json['tag'] as List<dynamic>).map((e) => e as String).toList(),
 );
@@ -30,8 +25,7 @@ Map<String, dynamic> _$CapacitaToJson(Capacita instance) => <String, dynamic>{
   'tipo': _$TipoCapacitaEnumMap[instance.tipo]!,
   'descrizione': instance.descrizione,
   'effetto': instance.effetto,
-  'modificatoreCaratteristica': instance.modificatoreCaratteristica?.toJson(),
-  'modificatoreAbilita': instance.modificatoreAbilita?.toJson(),
+  'modificatori': instance.modificatori.map((e) => e.toJson()).toList(),
   'costo': instance.costo,
   'tag': instance.tag,
 };

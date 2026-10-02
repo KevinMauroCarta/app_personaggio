@@ -1,9 +1,9 @@
-// I Modificatori di una Capacità posseduta alimentano il Valore Bonus
-// della Caratteristica/Abilità indicata, e i suoi Tag entrano nei Tag del
-// personaggio (Modello/Capacità).
+// I Tag di razza, sistema, pianeta, background, capacità e talenti
+// entrano nei Tag del personaggio (Modello/Capacità).
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:app_personaggio/enums/bersaglio.dart';
 import 'package:app_personaggio/enums/tipo_capacita.dart';
 import 'package:app_personaggio/models/capacita.dart';
 import 'package:app_personaggio/enums/densita_popolativa.dart';
@@ -20,8 +20,7 @@ import 'package:app_personaggio/services/effetti_personaggio.dart';
 
 Capacita _capacita({
   required String nome,
-  Modificatore? caratteristica,
-  Modificatore? abilita,
+  List<Modificatore> modificatori = const [],
   List<String> tag = const [],
 }) {
   return Capacita(
@@ -29,8 +28,7 @@ Capacita _capacita({
     tipo: TipoCapacita.generica,
     descrizione: '',
     effetto: '',
-    modificatoreCaratteristica: caratteristica,
-    modificatoreAbilita: abilita,
+    modificatori: modificatori,
     costo: 2,
     tag: tag,
   );
@@ -70,13 +68,15 @@ void main() {
   final capacita = [
     _capacita(
       nome: 'Impeto',
-      caratteristica: const Modificatore(nome: 'Forza', valore: 1),
+      modificatori: const [Modificatore(bersaglio: Bersaglio.forza, valore: 1)],
       tag: const ['Brutale'],
     ),
     _capacita(
       nome: 'Vista Acuta',
-      caratteristica: const Modificatore(nome: 'Forza', valore: 2),
-      abilita: const Modificatore(nome: 'Percezione', valore: 1),
+      modificatori: const [
+        Modificatore(bersaglio: Bersaglio.forza, valore: 2),
+        Modificatore(bersaglio: Bersaglio.percezione, valore: 1),
+      ],
       tag: const ['Brutale', 'Vigile'],
     ),
     _capacita(nome: 'Senza effetti'),

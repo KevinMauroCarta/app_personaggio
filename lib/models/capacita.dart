@@ -12,8 +12,11 @@ class Capacita {
   final TipoCapacita tipo;
   final String descrizione;
   final String effetto;
-  final Modificatore? modificatoreCaratteristica;
-  final Modificatore? modificatoreAbilita;
+
+  /// I Modificatori che porta: su Caratteristiche, Abilità o valori della
+  /// Scheda (Modello/Modificatore).
+  @JsonKey(readValue: leggiModificatori)
+  final List<Modificatore> modificatori;
   final int costo;
   final List<String> tag;
 
@@ -22,8 +25,7 @@ class Capacita {
     required this.tipo,
     required this.descrizione,
     required this.effetto,
-    this.modificatoreCaratteristica,
-    this.modificatoreAbilita,
+    this.modificatori = const [],
     required this.costo,
     required this.tag,
   });

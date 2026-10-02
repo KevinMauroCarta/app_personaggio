@@ -71,8 +71,7 @@ Scheda _schedaDiProva() {
     ),
     keyword: const ['Imperiale', 'Psionico'],
     iraAttuale: 5,
-    velocitaBonus: 2,
-    ferite: const Ferite(attuali: 3, bonus: 2, gradoFerita: GradoFerita.due),
+    ferite: const Ferite(attuali: 3, gradoFerita: GradoFerita.due),
     equipaggiamento: Equipaggiamento(
       armi: [
         ArmaDistanza(

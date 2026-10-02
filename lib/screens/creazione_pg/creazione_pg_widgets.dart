@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../enums/tipo_capacita.dart';
 import '../../models/capacita.dart';
-import '../../models/modificatore.dart';
 import '../../widgets/sezione_collassabile.dart';
 
 /// Dialog per aggiungere o sottrarre una quantità di PX, usato sia dalla
@@ -239,8 +238,7 @@ class DettagliOpzioni extends StatelessWidget {
 ///     Tipo: {tipo}
 ///     Descrizione: {descrizione}
 ///     Effetto: {effetto}
-///     {modificatoreCaratteristica.nome} +{valore}
-///     {modificatoreAbilita.nome} +{valore}
+///     {bersaglio} +{valore}       (uno per Modificatore)
 ///     [{tag}]
 ///
 /// I modificatori compaiono solo se presenti e il loro valore ha sempre
@@ -278,10 +276,7 @@ class DettagliCapacita extends StatelessWidget {
                         _campo('Tipo', c.tipo.label),
                         _campo('Descrizione', c.descrizione),
                         _campo('Effetto', c.effetto),
-                        if (c.modificatoreCaratteristica != null)
-                          Text(_modificatore(c.modificatoreCaratteristica!)),
-                        if (c.modificatoreAbilita != null)
-                          Text(_modificatore(c.modificatoreAbilita!)),
+                        for (final m in c.modificatori) Text(m.testo),
                         if (c.tag.isNotEmpty) Text('[${c.tag.join(', ')}]'),
                       ],
                     ),
@@ -308,10 +303,6 @@ class DettagliCapacita extends StatelessWidget {
       ),
     );
   }
-
-  /// "{nome} +{valore}", con il segno sempre esplicito.
-  String _modificatore(Modificatore m) =>
-      '${m.nome} ${m.valore >= 0 ? '+' : '-'}${m.valore.abs()}';
 }
 
 /// Dropdown con, a fianco, un Pulsante Info e (opzionalmente) un bottone

@@ -8,7 +8,6 @@ part of 'ferite.dart';
 
 Ferite _$FeriteFromJson(Map<String, dynamic> json) => Ferite(
   attuali: (json['attuali'] as num?)?.toInt() ?? 0,
-  bonus: (json['bonus'] as num?)?.toInt() ?? 0,
   gradoFerita:
       $enumDecodeNullable(_$GradoFeritaEnumMap, json['gradoFerita']) ??
       GradoFerita.zero,
@@ -16,7 +15,6 @@ Ferite _$FeriteFromJson(Map<String, dynamic> json) => Ferite(
 
 Map<String, dynamic> _$FeriteToJson(Ferite instance) => <String, dynamic>{
   'attuali': instance.attuali,
-  'bonus': instance.bonus,
   'gradoFerita': _$GradoFeritaEnumMap[instance.gradoFerita]!,
 };
 

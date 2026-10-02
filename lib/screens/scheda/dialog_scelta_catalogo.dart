@@ -48,6 +48,12 @@ class DialogSceltaCatalogo extends StatefulWidget {
   /// Il tooltip del pulsante, a partire dal nome della voce.
   final String Function(String nome) tooltipScelta;
 
+  /// Perché una voce non si può scegliere, o null se si può. Le voci
+  /// bloccate restano in elenco - per vedere cosa c'è e quanto manca - ma
+  /// con il pulsante spento e il motivo al posto del valore (es. un
+  /// impianto che non entra nel Carico rimasto).
+  final String? Function(String nome)? motivoBloccato;
+
   const DialogSceltaCatalogo({
     super.key,
     required this.titolo,
@@ -56,6 +62,7 @@ class DialogSceltaCatalogo extends StatefulWidget {
     required this.testoVuoto,
     required this.iconaScelta,
     required this.tooltipScelta,
+    this.motivoBloccato,
   });
 
   /// La modale di "Aggiungi oggetto": oggetti, armi e armature insieme.
@@ -243,6 +250,9 @@ class _DialogSceltaCatalogoState extends State<DialogSceltaCatalogo> {
                             : null,
                         icona: widget.iconaScelta,
                         tooltip: widget.tooltipScelta(risultati[indice]),
+                        bloccato: widget.motivoBloccato?.call(
+                          risultati[indice],
+                        ),
                         onScegli: () =>
                             Navigator.of(context).pop(risultati[indice]),
                       ),
@@ -439,16 +449,23 @@ class _RigaCatalogo extends StatelessWidget {
   final String tooltip;
   final VoidCallback onScegli;
 
+  /// Il motivo per cui la voce non si può scegliere, o null.
+  final String? bloccato;
+
   const _RigaCatalogo({
     required this.nome,
     required this.valore,
     required this.icona,
     required this.tooltip,
     required this.onScegli,
+    this.bloccato,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colori = Theme.of(context).colorScheme;
+    final testo = bloccato ?? valore;
+
     return SezioneCollassabile(
       titolo: nome,
       apertaIniziale: false,
@@ -458,21 +475,27 @@ class _RigaCatalogo extends StatelessWidget {
         children: [
           // Largo al massimo un terzo della riga: una Descrizione intera
           // spingerebbe fuori il nome.
-          if (valore != null)
+          if (testo != null)
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.sizeOf(context).width / 3,
               ),
               child: Text(
-                valore!,
+                testo,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: bloccato != null
+                      ? colori.error
+                      : colori.onSurfaceVariant,
                 ),
               ),
             ),
-          IconButton(icon: Icon(icona), tooltip: tooltip, onPressed: onScegli),
+          IconButton(
+            icon: Icon(icona),
+            tooltip: bloccato ?? tooltip,
+            onPressed: bloccato == null ? onScegli : null,
+          ),
         ],
       ),
       figli: [

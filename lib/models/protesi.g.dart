@@ -12,19 +12,15 @@ Protesi _$ProtesiFromJson(Map<String, dynamic> json) => Protesi(
   parte: $enumDecode(_$ParteCorpoEnumMap, json['parte']),
   descrizione: json['descrizione'] as String? ?? '',
   effetto: json['effetto'] as String? ?? '',
-  modificatoreCaratteristica: json['modificatoreCaratteristica'] == null
-      ? null
-      : Modificatore.fromJson(
-          json['modificatoreCaratteristica'] as Map<String, dynamic>,
-        ),
-  modificatoreAbilita: json['modificatoreAbilita'] == null
-      ? null
-      : Modificatore.fromJson(
-          json['modificatoreAbilita'] as Map<String, dynamic>,
-        ),
+  modificatori:
+      (leggiModificatori(json, 'modificatori') as List<dynamic>?)
+          ?.map((e) => Modificatore.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   capacita: json['capacita'] == null
       ? null
       : Capacita.fromJson(json['capacita'] as Map<String, dynamic>),
+  carico: (json['carico'] as num?)?.toInt() ?? 1,
   valore: (json['valore'] as num?)?.toInt() ?? 0,
   rarita: $enumDecodeNullable(_$RaritaEnumMap, json['rarita']) ?? Rarita.comune,
 );
@@ -35,9 +31,9 @@ Map<String, dynamic> _$ProtesiToJson(Protesi instance) => <String, dynamic>{
   'parte': _$ParteCorpoEnumMap[instance.parte]!,
   'descrizione': instance.descrizione,
   'effetto': instance.effetto,
-  'modificatoreCaratteristica': instance.modificatoreCaratteristica?.toJson(),
-  'modificatoreAbilita': instance.modificatoreAbilita?.toJson(),
+  'modificatori': instance.modificatori.map((e) => e.toJson()).toList(),
   'capacita': instance.capacita?.toJson(),
+  'carico': instance.carico,
   'valore': instance.valore,
   'rarita': _$RaritaEnumMap[instance.rarita]!,
 };

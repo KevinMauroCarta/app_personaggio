@@ -435,6 +435,7 @@ class _AumentoPgPageState extends State<AumentoPgPage> {
           nome,
           capacita: capacita,
           background: p.background,
+          mutazioni: p.mutazioni,
         ),
       );
     }).toList();
