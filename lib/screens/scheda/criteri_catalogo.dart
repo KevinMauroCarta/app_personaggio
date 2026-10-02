@@ -242,7 +242,7 @@ final criterioRarita = CriterioTesto(
 // ricordare come si scrivono.
 final criterioTratti = CriterioTesto(
   'Tratti',
-  (nome) => trattiDi(nome)?.map((t) => t.nome).toList(),
+  (nome) => trattiDi(nome)?.map((t) => t.etichetta).toList(),
   ordinabile: false,
   aScelta: true,
 );

@@ -1,4 +1,4 @@
-// APP/Pagina/Scheda, pagina Punk (nome provvisorio): gli Impianti.
+// APP/Pagina/Scheda, pagina Impianti: gli Impianti.
 //
 // Chip Neurali e Protesi (Sostitutivi ed Esoscheletri): il modello, il
 // salvataggio con la Scheda, i dati segnaposto e la pagina, dove si
@@ -92,8 +92,8 @@ Scheda _scheda({
   );
 }
 
-/// Apre la Scheda sulla pagina Punk e raccoglie le schede salvate.
-Future<List<Scheda>> _apriPunk(
+/// Apre la Scheda sulla pagina Impianti e raccoglie le schede salvate.
+Future<List<Scheda>> _apriImpianti(
   WidgetTester tester, {
   Impianti impianti = const Impianti(),
   List<String> oggetti = const [],
@@ -112,7 +112,7 @@ Future<List<Scheda>> _apriPunk(
       ),
     ),
   );
-  await vaiAllaPagina(tester, 'Punk');
+  await vaiAllaPagina(tester, 'Impianti');
   return salvate;
 }
 
@@ -295,22 +295,22 @@ void main() {
   });
 
   group('pagina', () {
-    testWidgets('Equip, Punk e Oggetti sono le ultime tre linguette', (
+    testWidgets('Equip, Impianti e Oggetti sono le ultime tre linguette', (
       tester,
     ) async {
-      await _apriPunk(tester);
+      await _apriImpianti(tester);
 
       double x(String nome) => tester.getTopLeft(linguetta(nome)).dx;
-      // Equip viene subito prima di Punk, che viene subito prima di
+      // Equip viene subito prima di Impianti, che viene subito prima di
       // Oggetti; e Stato, che prima stava dopo Equip, ora sta prima.
       expect(x('Stato'), lessThan(x('Equip')));
-      expect(x('Equip'), lessThan(x('Punk')));
-      expect(x('Punk'), lessThan(x('Oggetti')));
+      expect(x('Equip'), lessThan(x('Impianti')));
+      expect(x('Impianti'), lessThan(x('Oggetti')));
       expect(x('Poteri'), lessThan(x('Stato')));
     });
 
     testWidgets('la pagina ha le due sezioni, vuote', (tester) async {
-      await _apriPunk(tester);
+      await _apriImpianti(tester);
 
       expect(find.text('Chip Neurali'), findsOneWidget);
       expect(find.text('Protesi'), findsOneWidget);
@@ -324,7 +324,7 @@ void main() {
     testWidgets('un chip si installa dalla modale e la X lo manda in Oggetti', (
       tester,
     ) async {
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
 
       await _aggiungi(tester, 'Aggiungi chip neurale', _chip.nome);
 
@@ -347,7 +347,7 @@ void main() {
       final leggero = listaProtesi.firstWhere(
         (p) => p.tipo == TipoProtesi.esoscheletro && p.carico == 1,
       );
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
 
       await _aggiungi(tester, 'Aggiungi protesi', _sostitutivo.nome);
       await _aggiungi(tester, 'Aggiungi protesi', leggero.nome);
@@ -370,7 +370,7 @@ void main() {
     testWidgets('la stessa protesi si può avere due volte', (tester) async {
       // Di Carico 1, così due stanno nella Resistenza 3.
       final leggera = listaProtesi.firstWhere((p) => p.carico == 1);
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
 
       await _aggiungi(tester, 'Aggiungi protesi', leggera.nome);
       await _aggiungi(tester, 'Aggiungi protesi', leggera.nome);
@@ -382,7 +382,10 @@ void main() {
     testWidgets(
       'sotto il nome: parte del corpo, Carico, Modificatori e Capacità',
       (tester) async {
-        await _apriPunk(tester, impianti: Impianti(protesi: [_esoscheletro]));
+        await _apriImpianti(
+          tester,
+          impianti: Impianti(protesi: [_esoscheletro]),
+        );
 
         final atteso = [
           _esoscheletro.parte.label,
@@ -396,7 +399,7 @@ void main() {
     );
 
     testWidgets('toccando il nome si aprono tutti i dati', (tester) async {
-      await _apriPunk(tester, impianti: Impianti(chipNeurali: [_chip]));
+      await _apriImpianti(tester, impianti: Impianti(chipNeurali: [_chip]));
 
       await _tocca(tester, find.text(_chip.nome));
 
@@ -414,7 +417,7 @@ void main() {
     testWidgets('nella modale delle protesi si filtra per parte del corpo', (
       tester,
     ) async {
-      await _apriPunk(tester);
+      await _apriImpianti(tester);
       await _tocca(
         tester,
         find.widgetWithText(OutlinedButton, 'Aggiungi protesi'),
@@ -548,7 +551,7 @@ void main() {
         chipCaratteristica.modificatori,
         CategoriaBersaglio.caratteristica,
       )!;
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
       final prima = caratteristica(_scheda(), m.bersaglio.label);
 
       await _aggiungi(tester, 'Aggiungi chip neurale', chipCaratteristica.nome);
@@ -563,7 +566,7 @@ void main() {
 
     testWidgets('un chip d Abilità alza l Abilità', (tester) async {
       final a = _di(chipAbilita.modificatori, CategoriaBersaglio.abilita)!;
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
 
       await _aggiungi(tester, 'Aggiungi chip neurale', chipAbilita.nome);
 
@@ -575,7 +578,7 @@ void main() {
         esoscheletroCaratteristica.modificatori,
         CategoriaBersaglio.caratteristica,
       )!;
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
       final prima = caratteristica(_scheda(), e.bersaglio.label);
 
       await _aggiungi(
@@ -594,7 +597,7 @@ void main() {
         chipCaratteristica.modificatori,
         CategoriaBersaglio.caratteristica,
       )!;
-      await _apriPunk(
+      await _apriImpianti(
         tester,
         impianti: Impianti(chipNeurali: [chipCaratteristica]),
       );
@@ -678,7 +681,7 @@ void main() {
     });
 
     testWidgets('ogni sezione mostra il suo Carico', (tester) async {
-      await _apriPunk(tester);
+      await _apriImpianti(tester);
       expect(find.text('Carico (limite: Volontà)'), findsOneWidget);
       expect(find.text('Carico (limite: Resistenza)'), findsOneWidget);
       expect(find.text('0/3'), findsNWidgets(2));
@@ -693,7 +696,7 @@ void main() {
     testWidgets('nella modale quello che non entra è spento, col motivo', (
       tester,
     ) async {
-      final salvate = await _apriPunk(
+      final salvate = await _apriImpianti(
         tester,
         impianti: Impianti(chipNeurali: [pesante]),
       );
@@ -714,7 +717,7 @@ void main() {
 
     testWidgets('oltre il limite il Carico è rosso e lo dice', (tester) async {
       // Il limite può scendere dopo: qui Volontà 3 con 4 di Carico.
-      await _apriPunk(
+      await _apriImpianti(
         tester,
         impianti: Impianti(chipNeurali: [pesante, pesante]),
       );
@@ -730,7 +733,7 @@ void main() {
     });
 
     testWidgets('dagli Oggetti un impianto si installa', (tester) async {
-      final salvate = await _apriPunk(tester, oggetti: [_chip.nome]);
+      final salvate = await _apriImpianti(tester, oggetti: [_chip.nome]);
       await vaiAllaPagina(tester, 'Oggetti');
 
       await _tocca(tester, find.byTooltip('Installa ${_chip.nome}'));
@@ -742,7 +745,7 @@ void main() {
 
     testWidgets('gli oggetti normali non hanno Installa', (tester) async {
       final oggetto = listaOggetti.first.nome;
-      await _apriPunk(tester, oggetti: [oggetto]);
+      await _apriImpianti(tester, oggetti: [oggetto]);
       await vaiAllaPagina(tester, 'Oggetti');
 
       expect(find.byTooltip('Installa $oggetto'), findsNothing);
@@ -756,7 +759,7 @@ void main() {
       final altra = listaProtesi.firstWhere(
         (p) => p.carico == 2 && p.nome != _sostitutivo.nome,
       );
-      await _apriPunk(
+      await _apriImpianti(
         tester,
         impianti: Impianti(protesi: [_sostitutivo]),
         oggetti: [altra.nome],
@@ -831,7 +834,7 @@ void main() {
     testWidgets('installato l impianto, la capacità c è con i suoi effetti', (
       tester,
     ) async {
-      final salvate = await _apriPunk(tester);
+      final salvate = await _apriImpianti(tester);
 
       await _aggiungi(tester, 'Aggiungi protesi', concedente.nome);
 
@@ -856,7 +859,7 @@ void main() {
     testWidgets('disinstallato l impianto, la capacità se ne va', (
       tester,
     ) async {
-      final salvate = await _apriPunk(
+      final salvate = await _apriImpianti(
         tester,
         impianti: Impianti(protesi: [concedente]),
       );

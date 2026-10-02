@@ -3,6 +3,7 @@ import '../models/abilita_personaggio.dart';
 import '../models/background.dart';
 import '../models/capacita.dart';
 import '../models/caratteristica_personaggio.dart';
+import '../models/equipaggiamento.dart';
 import '../models/impianti.dart';
 import '../models/modificatore.dart';
 import '../models/mutazione.dart';
@@ -26,7 +27,9 @@ import '../models/talento.dart';
 
 /// Tutti i Modificatori in vigore: quelli delle [capacita] possedute, del
 /// [background], delle [mutazioni] e degli [impianti] installati, con le
-/// Capacità da Impianto che concedono.
+/// Capacità da Impianto che concedono, più quelli dei Tratti
+/// dell'[equipaggiamento] in uso: l'armatura indossata e le armi
+/// impugnate (Modello/Tratto).
 ///
 /// Vanno passate tutte insieme, perché i bonus si ricalcolano sempre da
 /// zero: è così che togliendo una capacità (o una mutazione, o un
@@ -40,6 +43,7 @@ List<Modificatore> modificatoriAttivi({
   Background? background,
   List<Mutazione> mutazioni = const [],
   Impianti impianti = const Impianti(),
+  Equipaggiamento equipaggiamento = const Equipaggiamento(),
 }) => [
   for (final c in capacita) ...c.modificatori,
   ...?background?.modificatori,
@@ -47,6 +51,11 @@ List<Modificatore> modificatoriAttivi({
   for (final c in impianti.chipNeurali) ...c.modificatori,
   for (final p in impianti.protesi) ...p.modificatori,
   for (final c in impianti.capacita) ...c.modificatori,
+  for (final t in [
+    ...?equipaggiamento.armatura?.tratti,
+    for (final a in equipaggiamento.armi) ...a.tratti,
+  ])
+    ...t.modificatoriEffettivi,
 ];
 
 /// Quanto i [modificatori] cambiano [bersaglio]: la somma dei loro
@@ -77,6 +86,7 @@ int bonusCaratteristica(
   Background? background,
   List<Mutazione> mutazioni = const [],
   Impianti impianti = const Impianti(),
+  Equipaggiamento equipaggiamento = const Equipaggiamento(),
 }) => _bonusPerNome(
   nome,
   modificatoriAttivi(
@@ -84,6 +94,7 @@ int bonusCaratteristica(
     background: background,
     mutazioni: mutazioni,
     impianti: impianti,
+    equipaggiamento: equipaggiamento,
   ),
 );
 
@@ -94,6 +105,7 @@ int bonusAbilita(
   Background? background,
   List<Mutazione> mutazioni = const [],
   Impianti impianti = const Impianti(),
+  Equipaggiamento equipaggiamento = const Equipaggiamento(),
 }) => _bonusPerNome(
   nome,
   modificatoriAttivi(
@@ -101,6 +113,7 @@ int bonusAbilita(
     background: background,
     mutazioni: mutazioni,
     impianti: impianti,
+    equipaggiamento: equipaggiamento,
   ),
 );
 
@@ -119,9 +132,12 @@ int bonusAbilita(
 /// non li vedono, e i loro bonus li ricalcolano senza. Chi rimette un
 /// Personaggio nella sua Scheda (la Home, al ritorno da Modifica e
 /// Aumento) passa di qui, così gli effetti degli impianti non si perdono.
+/// Lo stesso vale per l'[equipaggiamento]: i Tratti dell'armatura
+/// indossata e delle armi impugnate (es. Potenziata alza la Forza).
 Personaggio conEffettiRicalcolati(
   Personaggio p, {
   Impianti impianti = const Impianti(),
+  Equipaggiamento equipaggiamento = const Equipaggiamento(),
 }) {
   return Personaggio(
     nome: p.nome,
@@ -142,6 +158,7 @@ Personaggio conEffettiRicalcolati(
             background: p.background,
             mutazioni: p.mutazioni,
             impianti: impianti,
+            equipaggiamento: equipaggiamento,
           ),
         ),
     ],
@@ -156,6 +173,7 @@ Personaggio conEffettiRicalcolati(
             background: p.background,
             mutazioni: p.mutazioni,
             impianti: impianti,
+            equipaggiamento: equipaggiamento,
           ),
         ),
     ],

@@ -38,7 +38,7 @@ final _fucile = listaArmi.firstWhere((a) => a.nome == 'Pistola');
 final _mazza = listaArmi.firstWhere((a) => a.nome == 'Martello');
 
 /// Tratto in comune fra le due armi: deve essere spiegato una volta sola.
-final _trattoComune = listaTratti[2];
+final _trattoComune = tratto('Affidabile', '1');
 
 final _armatura = listaArmature[0];
 
@@ -219,11 +219,11 @@ void main() {
     // Nella colonna Tratti il nome da solo è la cella della mazza (quella
     // del fucile elenca due tratti); sotto la tabella la voce
     // espandibile è una sola, anche se il tratto è su entrambe le armi.
-    expect(find.text(_trattoComune.nome), findsNWidgets(2));
+    expect(find.text(_trattoComune.etichetta), findsNWidgets(2));
 
     // La voce sta in fondo alla pagina: va portata in vista prima di
     // toccarla.
-    final voce = find.text(_trattoComune.nome).last;
+    final voce = find.text(_trattoComune.etichetta).last;
     await tester.ensureVisible(voce);
     await tester.pumpAndSettle();
     await tester.tap(voce);

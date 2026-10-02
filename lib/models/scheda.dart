@@ -87,12 +87,14 @@ class Scheda {
   });
 
   /// I Modificatori in vigore sul personaggio: quelli di capacità,
-  /// background, mutazioni e impianti installati.
+  /// background, mutazioni, impianti installati e Tratti
+  /// dell'equipaggiamento in uso.
   List<Modificatore> get _modificatori => modificatoriAttivi(
     capacita: personaggio.capacita,
     background: personaggio.background,
     mutazioni: personaggio.mutazioni,
     impianti: impianti,
+    equipaggiamento: equipaggiamento,
   );
 
   /// Quanto i Modificatori in vigore cambiano [bersaglio]. I valori qui

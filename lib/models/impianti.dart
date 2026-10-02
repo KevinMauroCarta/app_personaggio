@@ -10,8 +10,7 @@ part 'impianti.g.dart';
 /// Modello/Impianti
 ///
 /// Quello che il personaggio ha installato addosso e dentro: i Chip
-/// Neurali e le Protesi. In Scheda ha una pagina sua (la linguetta
-/// "Punk", nome provvisorio).
+/// Neurali e le Protesi. In Scheda ha una pagina sua, "Impianti".
 ///
 /// Sta a parte dall'Equipaggiamento perché non si indossa né si porta
 /// nello zaino: un braccio meccanico non si toglie per cambiarlo con una

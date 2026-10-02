@@ -173,12 +173,14 @@ class _HomePageState extends State<HomePage> {
   /// Quelle pagine ricalcolano il Valore Bonus senza gli Impianti, che
   /// stanno nella Scheda e non nel Personaggio: qui si ricalcola con
   /// quelli della scheda, altrimenti dopo un Aumento un chip "Mira +1"
-  /// smetterebbe di alzare la Mira.
+  /// smetterebbe di alzare la Mira. Lo stesso per i Tratti
+  /// dell'equipaggiamento in uso (es. un'armatura Potenziata).
   Scheda _conPersonaggio(Scheda scheda, Personaggio personaggio) {
     return scheda.copyWith(
       personaggio: conEffettiRicalcolati(
         personaggio,
         impianti: scheda.impianti,
+        equipaggiamento: scheda.equipaggiamento,
       ),
     );
   }

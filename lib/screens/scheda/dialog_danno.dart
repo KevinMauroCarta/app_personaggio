@@ -4,8 +4,9 @@ import '../../enums/tipo_danno.dart';
 
 /// Quello che si è segnato sulla modale delle Ferite: un colpo incassato
 /// o una cura. Con [cura] a true, [tipo] non vuol dire niente - una cura
-/// non è fisica né energetica.
-typedef EsitoFerite = ({int quantita, TipoDanno tipo, bool cura});
+/// non è fisica né energetica. Con [mortali] a true il colpo sono Ferite
+/// Mortali, che ignorano qualsiasi Resilienza: anche lì [tipo] non conta.
+typedef EsitoFerite = ({int quantita, TipoDanno tipo, bool mortali, bool cura});
 
 /// Quello che si è segnato sulla modale dello Shock.
 typedef EsitoShock = ({int quantita, bool cura});
@@ -58,6 +59,10 @@ class _DialogDannoState extends State<DialogDanno>
   int _cura = 0;
   TipoDanno _tipo = TipoDanno.fisico;
 
+  /// Ferite Mortali al posto di un danno Fisico o Energetico: ignorano
+  /// qualsiasi Resilienza.
+  bool _mortali = false;
+
   @override
   void dispose() {
     _schede.dispose();
@@ -66,7 +71,9 @@ class _DialogDannoState extends State<DialogDanno>
 
   bool get _inCure => _schede.index == 1;
 
-  int get _resilienza => _tipo == TipoDanno.fisico
+  int get _resilienza => _mortali
+      ? 0
+      : _tipo == TipoDanno.fisico
       ? widget.resilienzaFisica
       : widget.resilienzaEnergetica;
 
@@ -115,6 +122,7 @@ class _DialogDannoState extends State<DialogDanno>
               : () => Navigator.of(context).pop((
                   quantita: _inCure ? _cura : _danno,
                   tipo: _tipo,
+                  mortali: _mortali,
                   cura: _inCure,
                 )),
           child: const Text('Applica'),
@@ -155,14 +163,32 @@ class _DialogDannoState extends State<DialogDanno>
                 for (final tipo in TipoDanno.values)
                   ButtonSegment(value: tipo, label: Text(tipo.label)),
               ],
-              selected: {_tipo},
-              onSelectionChanged: (scelta) =>
-                  setState(() => _tipo = scelta.first),
+              // Con le Ferite Mortali scelte nessuno dei due è attivo.
+              selected: _mortali ? const {} : {_tipo},
+              emptySelectionAllowed: true,
+              onSelectionChanged: (scelta) => setState(() {
+                if (scelta.isNotEmpty) _tipo = scelta.first;
+                _mortali = false;
+              }),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Un'alternativa ai due tipi, non un terzo tipo di danno: le
+          // armi fanno danno Fisico o Energetico, le Ferite Mortali
+          // arrivano da altro e passano qualsiasi Resilienza.
+          Center(
+            child: ChoiceChip(
+              label: const Text('Ferite Mortali'),
+              showCheckmark: false,
+              selected: _mortali,
+              onSelected: (scelta) => setState(() => _mortali = scelta),
             ),
           ),
           const SizedBox(height: 16),
           Text(
-            'Danno $_danno - Resilienza ${_tipo.labelFemminile} $_resilienza',
+            _mortali
+                ? 'Danno $_danno - Ferite Mortali: nessuna Resilienza'
+                : 'Danno $_danno - Resilienza ${_tipo.labelFemminile} $_resilienza',
             style: TextStyle(color: colori.onSurfaceVariant),
           ),
           const SizedBox(height: 4),

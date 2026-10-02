@@ -98,12 +98,17 @@ Future<int> _segnaDanno(
   WidgetTester tester,
   int danno, {
   bool energetico = false,
+  bool mortali = false,
 }) async {
   await tester.tap(find.byType(BarraStato).first);
   await tester.pumpAndSettle();
 
   if (energetico) {
     await tester.tap(find.text('Energetico'));
+    await tester.pumpAndSettle();
+  }
+  if (mortali) {
+    await tester.tap(find.text('Ferite Mortali'));
     await tester.pumpAndSettle();
   }
 
@@ -226,6 +231,22 @@ void main() {
     expect(danno, lessThanOrEqualTo(5), reason: 'il colpo si ferma');
     expect(salvate, isEmpty, reason: 'niente da salvare');
     expect(_barra(tester, 'Ferite').attuali, 0);
+  });
+
+  testWidgets('le Ferite Mortali ignorano qualsiasi Resilienza', (
+    tester,
+  ) async {
+    // Con l'armatura la Resilienza è anche più alta: non conta lo stesso.
+    final salvate = await _apriStato(
+      tester,
+      armatura: listaArmature.first,
+      ferite: 0,
+    );
+
+    final danno = await _segnaDanno(tester, 3, mortali: true);
+
+    expect(danno, greaterThan(0));
+    expect(salvate.last.ferite.attuali, danno);
   });
 
   testWidgets('il tipo Energetico usa la Resilienza Energetica', (

@@ -447,6 +447,6 @@ class DettagliArmatura extends StatelessWidget {
 }
 
 String _tratti(List<Tratto> tratti) =>
-    tratti.isEmpty ? '-' : tratti.map((t) => t.nome).join(', ');
+    tratti.isEmpty ? '-' : tratti.map((t) => t.etichetta).join(', ');
 
 String _tag(List<String> tag) => tag.isEmpty ? '-' : tag.join(', ');

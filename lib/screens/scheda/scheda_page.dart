@@ -60,12 +60,12 @@ import 'scheda_dati.dart';
 ///   Talenti e Capacità.
 /// - Stato: Difesa, Grinta, le barre di Ferite e Shock e il Grado
 ///   Ferita. È la pagina che si tiene aperta durante uno scontro.
-/// - Punk (nome provvisorio): gli Impianti, cioè Chip Neurali e Protesi
+/// - Impianti: gli Impianti, cioè Chip Neurali e Protesi
 ///   (Sostitutivi ed Esoscheletri).
 /// - Oggetti: Influenza, Ricchezza e quello che il personaggio si porta
 ///   dietro.
 ///
-/// Equip, Punk e Oggetti stanno in fondo e vicini: sono le tre pagine
+/// Equip, Impianti e Oggetti stanno in fondo e vicini: sono le tre pagine
 /// di quello che il personaggio ha addosso.
 ///
 /// Le modifiche non hanno un pulsante "Salva": la [Scheda] aggiornata
@@ -89,7 +89,7 @@ const List<String> _pagine = [
   'Poteri',
   'Stato',
   'Equip',
-  'Punk',
+  'Impianti',
   'Oggetti',
 ];
 
@@ -137,7 +137,7 @@ class _SchedaPageState extends State<SchedaPage> {
   /// ripetuto due volte vale quantità 2 (vedi [_oggettiConQuantita]).
   late List<String> _oggetti;
 
-  /// Gli Impianti installati (pagina "Punk"), nell'ordine in cui sono
+  /// Gli Impianti installati (pagina "Impianti"), nell'ordine in cui sono
   /// stati aggiunti. Lo stesso chip o la stessa protesi si può avere
   /// più volte: due braccia meccaniche sono due protesi.
   late List<ChipNeurale> _chipNeurali;
@@ -232,8 +232,9 @@ class _SchedaPageState extends State<SchedaPage> {
     final p = widget.scheda.personaggio;
 
     // Il Valore Bonus va ricalcolato qui e non solo in
-    // Creazione/Aumento: Mutazioni e Impianti si prendono da questa
-    // pagina, e portano Modificatori. Senza ricalcolo un chip o una
+    // Creazione/Aumento: Mutazioni, Impianti ed equipaggiamento (i
+    // Tratti di armi e armatura) si cambiano da questa pagina, e portano
+    // Modificatori. Senza ricalcolo un chip o una
     // mutazione comparirebbero in elenco senza alzare niente.
     return conEffettiRicalcolati(
       Personaggio(
@@ -257,6 +258,7 @@ class _SchedaPageState extends State<SchedaPage> {
         pxDisponibili: p.pxDisponibili,
       ),
       impianti: _impiantiCorrenti,
+      equipaggiamento: _equipaggiamentoCorrente,
     );
   }
 
@@ -290,7 +292,7 @@ class _SchedaPageState extends State<SchedaPage> {
                 _buildPaginaPoteri(scheda.personaggio),
                 _buildPaginaStato(scheda),
                 _buildPaginaEquip(scheda),
-                _buildPaginaPunk(),
+                _buildPaginaImpianti(),
                 _buildPaginaOggetti(scheda),
               ],
             ),
@@ -452,8 +454,9 @@ class _SchedaPageState extends State<SchedaPage> {
 
   /// Chiede il colpo ricevuto - o la cura - e aggiorna le Ferite.
   ///
-  /// Un colpo lascia le Ferite che supera la Resilienza; una cura le
-  /// toglie e basta, senza incontrare Resilienza.
+  /// Un colpo lascia le Ferite che supera la Resilienza (le Ferite
+  /// Mortali la ignorano del tutto); una cura le toglie e basta, senza
+  /// incontrare Resilienza.
   Future<void> _segnaDanno(Scheda scheda) async {
     final colpo = await showDialog<EsitoFerite>(
       context: context,
@@ -476,7 +479,10 @@ class _SchedaPageState extends State<SchedaPage> {
       return;
     }
 
-    final resilienza = colpo.tipo == TipoDanno.fisico
+    // Le Ferite Mortali ignorano qualsiasi Resilienza.
+    final resilienza = colpo.mortali
+        ? 0
+        : colpo.tipo == TipoDanno.fisico
         ? scheda.resilienzaFisica
         : scheda.resilienzaEnergetica;
     final int ferite = (colpo.quantita - resilienza).clamp(0, colpo.quantita);
@@ -891,7 +897,7 @@ class _SchedaPageState extends State<SchedaPage> {
   /// farlo capire senza doverci provare.
   ///
   /// Un impianto (Chip Neurale o Protesi) ha in più il pulsante per
-  /// installarlo: passa alla pagina Punk, e da lì dà i suoi effetti.
+  /// installarlo: passa alla pagina Impianti, e da lì dà i suoi effetti.
   /// È spento quando il suo Carico non entra in quello rimasto, e il
   /// tooltip dice perché.
   Widget _rigaOggetto({required String nome, required int quantita}) {
@@ -963,7 +969,7 @@ class _SchedaPageState extends State<SchedaPage> {
     _modifica(() => _oggetti.remove(nome));
   }
 
-  /// Pagina Punk (nome provvisorio): gli Impianti installati.
+  /// Pagina Impianti: gli Impianti installati.
   ///
   /// Due sezioni, Chip Neurali e Protesi, ognuna con il suo Carico (quanto
   /// è occupato sul limite: Volontà per i chip, Resistenza per le protesi)
@@ -975,7 +981,7 @@ class _SchedaPageState extends State<SchedaPage> {
   /// Quello che sta in questa pagina è installato e dà i suoi effetti.
   /// Disinstallato, un impianto finisce fra gli Oggetti, e da lì si può
   /// installare di nuovo.
-  Widget _buildPaginaPunk() {
+  Widget _buildPaginaImpianti() {
     final scheda = _schedaCorrente;
     final sostitutivi = _protesi
         .where((p) => p.tipo == TipoProtesi.sostitutivo)
@@ -1888,7 +1894,7 @@ class _SchedaPageState extends State<SchedaPage> {
   /// i nomi, perché descrizione ed effetto stanno sotto la tabella (vedi
   /// [_dettagliTratti]).
   String _elencoTratti(List<Tratto> tratti) =>
-      tratti.isEmpty ? '-' : tratti.map((t) => t.nome).join(', ');
+      tratti.isEmpty ? '-' : tratti.map((t) => t.etichetta).join(', ');
 
   /// I Tag come compaiono nella colonna "Tag" della tabella: solo i nomi.
   String _elencoTag(List<String> tag) => tag.isEmpty ? '-' : tag.join(', ');
@@ -1900,15 +1906,17 @@ class _SchedaPageState extends State<SchedaPage> {
   List<Widget> _dettagliTratti(Iterable<Tratto> tratti) {
     final unici = <String, Tratto>{};
     for (final t in tratti) {
-      unici[t.nome] = t;
+      unici[t.etichetta] = t;
     }
     if (unici.isEmpty) return const [];
     return [
       _sottoTitolo('Tratti'),
       ...unici.values.map(
-        (t) => _voceEspandibile(t.nome, [
+        (t) => _voceEspandibile(t.etichetta, [
           _riga('Descrizione', t.descrizione),
           _riga('Effetto', t.effetto),
+          for (final m in t.modificatoriEffettivi)
+            _riga('Modificatore', m.testo),
         ]),
       ),
     ];

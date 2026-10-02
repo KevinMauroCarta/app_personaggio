@@ -45,7 +45,7 @@ List<Armatura> armatureDaNomi(List<String> nomi) => [
     if (_armaturePerNome[nome] != null) _armaturePerNome[nome]!,
 ];
 
-// Impianti (pagina "Punk"): Chip Neurali e Protesi.
+// Impianti (pagina "Impianti"): Chip Neurali e Protesi.
 
 final List<String> chipNeuraliOptions = listaChipNeurali
     .map((c) => c.nome)
@@ -90,7 +90,7 @@ String descrizioneArmatura(String nome) {
 ///
 /// Lo stesso per Chip Neurali e Protesi: fra gli Oggetti sono impianti
 /// posseduti ma non installati, e non danno né Modificatori né
-/// Capacità finché non si installano (pagina Punk, Modello/Impianti).
+/// Capacità finché non si installano (pagina Impianti, Modello/Impianti).
 ///
 /// In ordine alfabetico: l'elenco mette insieme cataloghi diversi e
 /// senza ordinamento uscirebbe a blocchi, con l'oggetto cercato in un
@@ -192,7 +192,7 @@ Map<String, String> datiOggetto(String nome) {
       if (arma is ArmaDistanza) 'Raffica': arma.raffica ? 'Sì' : 'No',
       'Valore': '${arma.valore}',
       'Rarità': arma.rarita.label,
-      'Tratti': _elenco(arma.tratti.map((t) => t.nome)),
+      'Tratti': _elenco(arma.tratti.map((t) => t.etichetta)),
       'Tag': _elenco(arma.tag),
     };
   }
@@ -205,7 +205,7 @@ Map<String, String> datiOggetto(String nome) {
       'PA Energia': '${armatura.paEnergia}',
       'Valore': '${armatura.valore}',
       'Rarità': armatura.rarita.label,
-      'Tratti': _elenco(armatura.tratti.map((t) => t.nome)),
+      'Tratti': _elenco(armatura.tratti.map((t) => t.etichetta)),
       'Tag': _elenco(armatura.tag),
     };
   }
